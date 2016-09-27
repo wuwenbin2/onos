@@ -78,6 +78,7 @@
         <module>yms</module>
         <module>rabbitmq</module>
         <module>learning-switch</module>
+        <module>evpn</module>
     </modules>
 
 
