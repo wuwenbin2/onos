@@ -171,8 +171,13 @@ public class BgpUpdateMsgVer4 implements BgpUpdateMsg {
                 // Parsing NLRI
                 nlri = parseNlri(cb);
             }
-            return new BgpUpdateMsgVer4(bgpHeader, withDrwRoutes,
-                    bgpPathAttributes, nlri);
+            BgpUpdateMsgVer4 bgpUpdateMsgVer4 = new BgpUpdateMsgVer4(bgpHeader,
+                                                                     withDrwRoutes,
+                                                                     bgpPathAttributes,
+                                                                     nlri);
+            log.info("=====Receiving update message : {}=====",
+                     bgpUpdateMsgVer4.toString());
+            return bgpUpdateMsgVer4;
         }
     }
 
@@ -216,6 +221,8 @@ public class BgpUpdateMsgVer4 implements BgpUpdateMsg {
         @Override
         public void write(ChannelBuffer cb, BgpUpdateMsgVer4 message) throws BgpParseException {
 
+            log.info("=====Sending update message : {}=====",
+                     message.toString());
             int startIndex = cb.writerIndex();
             short afi = 0;
             byte safi = 0;
@@ -248,6 +255,11 @@ public class BgpUpdateMsgVer4 implements BgpUpdateMsg {
                     cb.writeShort(0);
                 }
 
+                if ((afi == Constants.AFI_EVPN_VALUE)
+                        && (safi == Constants.SAFI_EVPN_VALUE)) {
+                    cb.writeShort(0);
+                }
+
             }
 
             if (message.bgpPathAttributes != null) {
@@ -258,6 +270,7 @@ public class BgpUpdateMsgVer4 implements BgpUpdateMsg {
             int length = cb.writerIndex() - startIndex;
             cb.setShort(msgLenIndex, (short) length);
             message.bgpHeader.setLength((short) length);
+            log.info("=====Writing update message : {}=====", cb.copy().array());
         }
     }
 
@@ -385,4 +398,5 @@ public class BgpUpdateMsgVer4 implements BgpUpdateMsg {
                 .add("bgpPathAttributes", bgpPathAttributes)
                 .toString();
     }
+
 }

@@ -17,4 +17,4 @@
 /**
  * BGP Protocol evpn components.
  */
-package org.onosproject.bgpio.protocol;
+package org.onosproject.bgpio.protocol.evpn;

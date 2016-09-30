@@ -28,6 +28,7 @@ import org.onosproject.bgp.controller.BgpLocalRib;
 import org.onosproject.bgp.controller.BgpNodeListener;
 import org.onosproject.bgp.controller.BgpPeer;
 import org.onosproject.bgp.controller.BgpPeerManager;
+import org.onosproject.bgp.controller.BgpRouteListener;
 import org.onosproject.bgpio.exceptions.BgpParseException;
 import org.onosproject.bgpio.protocol.BgpMessage;
 import org.onosproject.bgpio.protocol.BgpUpdateMsg;
@@ -60,6 +61,7 @@ public class BgpControllerImpl implements BgpController {
 
     protected Set<BgpNodeListener> bgpNodeListener = new CopyOnWriteArraySet<>();
     protected Set<BgpLinkListener> bgpLinkListener = new CopyOnWriteArraySet<>();
+    protected Set<BgpRouteListener> bgpRouteListener = new CopyOnWriteArraySet<>();
 
     final Controller ctrl = new Controller(this);
 
@@ -133,23 +135,36 @@ public class BgpControllerImpl implements BgpController {
             }
             Iterator<BgpValueType> listIterator = pathAttr.iterator();
             boolean isLinkstate = false;
+            boolean isEvpn = false;
 
             while (listIterator.hasNext()) {
                 BgpValueType attr = listIterator.next();
                 if (attr instanceof MpReachNlri) {
                     MpReachNlri mpReach = (MpReachNlri) attr;
-                    if (mpReach.bgpFlowSpecNlri() == null) {
+                    if (mpReach.bgpLSNlri() != null) {
                         isLinkstate = true;
+                    }
+                    if (mpReach.bgpEvpnNlri() != null) {
+                        isEvpn = true;
                     }
                 } else if (attr instanceof MpUnReachNlri) {
                     MpUnReachNlri mpUnReach = (MpUnReachNlri) attr;
-                    if (mpUnReach.bgpFlowSpecNlri() == null) {
+                    if (mpUnReach.bgpLSNlri() != null) {
                         isLinkstate = true;
+                    }
+                    if (mpUnReach.bgpEvpnNlri() != null) {
+                        isEvpn = true;
                     }
                 }
             }
             if (isLinkstate) {
                 peer.buildAdjRibIn(pathAttr);
+            }
+
+            if (isEvpn) {
+                for (BgpRouteListener listener : bgpRouteListener) {
+                    listener.addRoute(bgpId, updateMsg);
+                }
             }
             break;
         default:
@@ -288,5 +303,21 @@ public class BgpControllerImpl implements BgpController {
     @Override
     public Set<BgpLinkListener> linkListener() {
         return bgpLinkListener;
+    }
+
+    @Override
+    public void addRouteListener(BgpRouteListener listener) {
+        this.bgpRouteListener.add(listener);
+
+    }
+
+    @Override
+    public void removeRouteListener(BgpRouteListener listener) {
+        this.bgpRouteListener.remove(listener);
+    }
+
+    @Override
+    public Set<BgpRouteListener> routeListener() {
+        return bgpRouteListener;
     }
 }

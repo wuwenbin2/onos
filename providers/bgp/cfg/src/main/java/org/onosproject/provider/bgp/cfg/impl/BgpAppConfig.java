@@ -49,6 +49,8 @@ public class BgpAppConfig extends Config<ApplicationId> {
     public static final String LARGE_AS_CAPABILITY = "largeAsCapability";
     public static final String FLOW_SPEC_CAPABILITY = "flowSpecCapability";
     public static final String FLOW_SPEC_RPD_CAPABILITY = "flowSpecRpdCapability";
+    public static final String VPNV4_CAPABILITY = "vpnv4Capability";
+    public static final String EVPN_CAPABILITY = "evpnCapability";
 
     public static final String BGP_PEER = "bgpPeer";
     public static final String PEER_IP = "peerIp";
@@ -71,16 +73,25 @@ public class BgpAppConfig extends Config<ApplicationId> {
     public boolean isValid() {
         boolean fields = false;
 
-        this.bgpController = DefaultServiceDirectory.getService(BgpController.class);
+        this.bgpController = DefaultServiceDirectory
+                .getService(BgpController.class);
         bgpConfig = bgpController.getConfig();
 
         fields = hasOnlyFields(ROUTER_ID, LOCAL_AS, MAX_SESSION, LS_CAPABILITY,
-                HOLD_TIME, LARGE_AS_CAPABILITY, FLOW_SPEC_CAPABILITY, FLOW_SPEC_RPD_CAPABILITY, BGP_PEER) &&
-                isIpAddress(ROUTER_ID, MANDATORY) && isNumber(LOCAL_AS, MANDATORY) &&
-                isNumber(MAX_SESSION, OPTIONAL, MIN_SESSION_NUMBER, MAX_SESSION_NUMBER)
-                && isNumber(HOLD_TIME, OPTIONAL, MIN_HOLDTIME, MAX_HOLDTIME) &&
-                isBoolean(LS_CAPABILITY, OPTIONAL) && isBoolean(LARGE_AS_CAPABILITY, OPTIONAL) &&
-                isString(FLOW_SPEC_CAPABILITY, OPTIONAL) && isBoolean(FLOW_SPEC_RPD_CAPABILITY, OPTIONAL);
+                               HOLD_TIME, LARGE_AS_CAPABILITY,
+                               FLOW_SPEC_CAPABILITY, FLOW_SPEC_RPD_CAPABILITY,
+                               VPNV4_CAPABILITY, EVPN_CAPABILITY, BGP_PEER)
+                && isIpAddress(ROUTER_ID, MANDATORY)
+                && isNumber(LOCAL_AS, MANDATORY)
+                && isNumber(MAX_SESSION, OPTIONAL, MIN_SESSION_NUMBER,
+                            MAX_SESSION_NUMBER)
+                && isNumber(HOLD_TIME, OPTIONAL, MIN_HOLDTIME, MAX_HOLDTIME)
+                && isBoolean(LS_CAPABILITY, OPTIONAL)
+                && isBoolean(LARGE_AS_CAPABILITY, OPTIONAL)
+                && isString(FLOW_SPEC_CAPABILITY, OPTIONAL)
+                && isBoolean(FLOW_SPEC_RPD_CAPABILITY, OPTIONAL)
+                && isBoolean(VPNV4_CAPABILITY, OPTIONAL)
+                && isBoolean(EVPN_CAPABILITY, OPTIONAL);
 
         if (!fields) {
             return fields;
@@ -126,9 +137,11 @@ public class BgpAppConfig extends Config<ApplicationId> {
     }
 
     /**
-     * Returns flow spec route policy distribution capability support from the configuration.
+     * Returns flow spec route policy distribution capability support from the
+     * configuration.
      *
-     * @return true if flow spec route policy distribution capability is set otherwise false
+     * @return true if flow spec route policy distribution capability is set
+     *         otherwise false
      */
     public boolean rpdCapability() {
         return Boolean.parseBoolean(get(FLOW_SPEC_RPD_CAPABILITY, null));
@@ -153,6 +166,24 @@ public class BgpAppConfig extends Config<ApplicationId> {
     }
 
     /**
+     * Returns vpnv4 capability support from the configuration.
+     *
+     * @return vpnv4 capability
+     */
+    public boolean vpnv4Capability() {
+        return Boolean.parseBoolean(get(VPNV4_CAPABILITY, null));
+    }
+
+    /**
+     * Returns evpn capability support from the configuration.
+     *
+     * @return evpn capability
+     */
+    public boolean evpnCapability() {
+        return Boolean.parseBoolean(get(EVPN_CAPABILITY, null));
+    }
+
+    /**
      * Returns holdTime of the local node from the configuration.
      *
      * @return holdTime
@@ -169,7 +200,8 @@ public class BgpAppConfig extends Config<ApplicationId> {
     public boolean validateFlowSpec() {
         if (flowSpecCapability() != null) {
             String flowSpec = flowSpecCapability();
-            if ((!flowSpec.equals("IPV4")) && (!flowSpec.equals("VPNV4")) && (!flowSpec.equals("IPV4_VPNV4"))) {
+            if ((!flowSpec.equals("IPV4")) && (!flowSpec.equals("VPNV4"))
+                    && (!flowSpec.equals("IPV4_VPNV4"))) {
                 return false;
             }
         }
@@ -218,6 +250,7 @@ public class BgpAppConfig extends Config<ApplicationId> {
         if (!validateHoldTime()) {
             return false;
         }
+
         return true;
     }
 
@@ -283,7 +316,7 @@ public class BgpAppConfig extends Config<ApplicationId> {
      * @return true if valid else false
      */
     public boolean validatePeerHoldTime(long remoteAs) {
-        //TODO:Validate it later..
+        // TODO:Validate it later..
         return true;
     }
 
@@ -299,10 +332,11 @@ public class BgpAppConfig extends Config<ApplicationId> {
         nodes = bgpPeer();
         for (int i = 0; i < nodes.size(); i++) {
             connectMode = nodes.get(i).connectMode();
-            if ((IpAddress.valueOf(nodes.get(i).hostname()) == null) ||
-                    !validateRemoteAs(nodes.get(i).asNumber()) ||
-                    !validatePeerHoldTime(nodes.get(i).holdTime()) ||
-                    !(connectMode.equals(PEER_CONNECT_ACTIVE) || connectMode.equals(PEER_CONNECT_PASSIVE))) {
+            if ((IpAddress.valueOf(nodes.get(i).hostname()) == null)
+                    || !validateRemoteAs(nodes.get(i).asNumber())
+                    || !validatePeerHoldTime(nodes.get(i).holdTime())
+                    || !(connectMode.equals(PEER_CONNECT_ACTIVE)
+                            || connectMode.equals(PEER_CONNECT_PASSIVE))) {
                 return false;
             }
         }
@@ -323,11 +357,13 @@ public class BgpAppConfig extends Config<ApplicationId> {
             return null;
         }
 
-        jsonNodes.forEach(jsonNode -> nodes.add(new BgpPeerConfig(
-                jsonNode.path(PEER_IP).asText(),
-                jsonNode.path(REMOTE_AS).asInt(),
-                jsonNode.path(PEER_HOLD_TIME).asInt(),
-                jsonNode.path(PEER_CONNECT_MODE).asText())));
+        jsonNodes.forEach(jsonNode -> nodes
+                .add(new BgpPeerConfig(jsonNode.path(PEER_IP).asText(),
+                                       jsonNode.path(REMOTE_AS)
+                                               .asInt(),
+                                       jsonNode.path(PEER_HOLD_TIME).asInt(),
+                                       jsonNode.path(PEER_CONNECT_MODE)
+                                               .asText())));
 
         return nodes;
     }
@@ -342,7 +378,8 @@ public class BgpAppConfig extends Config<ApplicationId> {
         private final short holdTime;
         private final String connectMode;
 
-        public BgpPeerConfig(String hostname, int asNumber, int holdTime, String connectMode) {
+        public BgpPeerConfig(String hostname, int asNumber, int holdTime,
+                             String connectMode) {
             this.hostname = checkNotNull(hostname);
             this.asNumber = asNumber;
             this.holdTime = (short) holdTime;

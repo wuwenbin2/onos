@@ -14,7 +14,31 @@
  * limitations under the License.
  */
 
+package org.onosproject.bgpio.protocol.evpn;
+
 /**
- * BGP Protocol evpn components.
+ * Enum to provide EVPN RouteType.
  */
-package org.onosproject.bgpio.protocol;
+public enum RouteType {
+    ETHERNET_AUTO_DISCOVERY(1), MAC_IP_ADVERTISEMENT(2),
+    INCLUSIVE_MULTICASE_ETHERNET(3), ETHERNET_SEGMENT(4);
+    int value;
+
+    /**
+     * Assign val with the value as the route type.
+     *
+     * @param val route type
+     */
+    RouteType(int val) {
+        value = val;
+    }
+
+    /**
+     * Returns value of route type.
+     *
+     * @return route type
+     */
+    public byte getType() {
+        return (byte) value;
+    }
+}

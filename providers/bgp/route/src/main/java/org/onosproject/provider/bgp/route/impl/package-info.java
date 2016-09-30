@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
- * BGP Protocol evpn components.
+ *Provider that uses BGP controller as a means of infrastructure topology discovery.
  */
-package org.onosproject.bgpio.protocol;
+package org.onosproject.provider.bgp.route.impl;

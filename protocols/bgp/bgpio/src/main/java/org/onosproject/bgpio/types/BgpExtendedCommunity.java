@@ -17,13 +17,13 @@
 package org.onosproject.bgpio.types;
 
 import com.google.common.base.MoreObjects;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.onosproject.bgpio.exceptions.BgpParseException;
 import org.onosproject.bgpio.util.Constants;
 import org.onosproject.bgpio.util.Validation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -68,7 +68,7 @@ public class BgpExtendedCommunity implements BgpValueType {
 
         ChannelBuffer tempCb = cb.copy();
         Validation validation = Validation.parseAttributeHeader(cb);
-        List<BgpValueType> fsActionTlvs = new LinkedList<>();
+        List<BgpValueType> bgpExtComTlvs = new LinkedList<>();
 
         if (cb.readableBytes() < validation.getLength()) {
             Validation.validateLen(BgpErrorType.UPDATE_MESSAGE_ERROR, BgpErrorType.ATTRIBUTE_LENGTH_ERROR,
@@ -84,33 +84,41 @@ public class BgpExtendedCommunity implements BgpValueType {
 
         ChannelBuffer tempBuf = cb.readBytes(validation.getLength());
         if (tempBuf.readableBytes() > 0) {
-            BgpValueType fsActionTlv = null;
-            ChannelBuffer actionBuf = tempBuf.readBytes(validation.getLength());
+            BgpValueType bgpExtComTlv = null;
+            ChannelBuffer bgpExtComBuf = tempBuf.readBytes(validation.getLength());
 
-            while (actionBuf.readableBytes() > 0) {
-                short actionType = actionBuf.readShort();
-                switch (actionType) {
+            while (bgpExtComBuf.readableBytes() > 0) {
+                short type = bgpExtComBuf.readShort();
+                switch (type) {
+                    case Constants.BGP_ROUTE_TARGET_AS:
+                    case Constants.BGP_ROUTE_TARGET_IP:
+                    case Constants.BGP_ROUTE_TARGET_LARGEAS:
+                        bgpExtComTlv = RouteTarget.read(type, bgpExtComBuf);
+                        break;
+                    case Constants.BGP_ENCAP:
+                        bgpExtComTlv = BgpEncap.read(bgpExtComBuf);
+                        break;
                     case Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_ACTION:
-                        fsActionTlv = BgpFsActionTrafficAction.read(actionBuf);
+                        bgpExtComTlv = BgpFsActionTrafficAction.read(bgpExtComBuf);
                         break;
                     case Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_MARKING:
-                        fsActionTlv = BgpFsActionTrafficMarking.read(actionBuf);
+                        bgpExtComTlv = BgpFsActionTrafficMarking.read(bgpExtComBuf);
                         break;
                     case Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_RATE:
-                        fsActionTlv = BgpFsActionTrafficRate.read(actionBuf);
+                        bgpExtComTlv = BgpFsActionTrafficRate.read(bgpExtComBuf);
                         break;
                     case Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_REDIRECT:
-                        fsActionTlv = BgpFsActionReDirect.read(actionBuf);
+                        bgpExtComTlv = BgpFsActionReDirect.read(bgpExtComBuf);
                         break;
-                    default: log.debug("Other type Not Supported:" + actionType);
+                    default: log.debug("Other type Not Supported:" + type);
                         break;
                 }
-                if (fsActionTlv != null) {
-                    fsActionTlvs.add(fsActionTlv);
+                if (bgpExtComTlv != null) {
+                    bgpExtComTlvs.add(bgpExtComTlv);
                 }
             }
         }
-        return new BgpExtendedCommunity(fsActionTlvs);
+        return new BgpExtendedCommunity(bgpExtComTlvs);
     }
 
     @Override
@@ -156,7 +164,14 @@ public class BgpExtendedCommunity implements BgpValueType {
 
         while (listIterator.hasNext()) {
             BgpValueType fsTlv = listIterator.next();
-            if (fsTlv.getType() == Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_ACTION) {
+            if (fsTlv.getType() == Constants.BGP_ROUTE_TARGET_AS || fsTlv.getType() == Constants.BGP_ROUTE_TARGET_IP
+                    || fsTlv.getType() == Constants.BGP_ROUTE_TARGET_LARGEAS) {
+                RouteTarget routeTarget = (RouteTarget) fsTlv;
+                routeTarget.write(cb);
+            } else if (fsTlv.getType() == Constants.BGP_ENCAP) {
+                BgpEncap bgpEncap = (BgpEncap) fsTlv;
+                bgpEncap.write(cb);
+            } else if (fsTlv.getType() == Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_ACTION) {
                 BgpFsActionTrafficAction trafficAction = (BgpFsActionTrafficAction) fsTlv;
                 trafficAction.write(cb);
             } else if (fsTlv.getType() == Constants.BGP_FLOWSPEC_ACTION_TRAFFIC_MARKING) {
