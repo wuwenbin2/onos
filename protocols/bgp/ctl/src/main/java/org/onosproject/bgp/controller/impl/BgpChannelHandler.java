@@ -338,7 +338,7 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
                 log.debug("Message received in established state " + m.getType());
                 // dispatch the message
                 h.dispatchMessage(m);
-                h.sendUpdateMessage();
+//                h.sendUpdateMessage();
             }
         };
 
@@ -767,7 +767,7 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
         BgpPeerImpl peer = (BgpPeerImpl) bgpPeer;
         peer.updateEvpn(operationType, nextHop, extCom, eVpnComponents);
 
-        log.info("Sending open message to {}", channel.getRemoteAddress());
+        log.info("Sending update message to {}", channel.getRemoteAddress());
 
     }
 

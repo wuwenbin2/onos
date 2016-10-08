@@ -37,4 +37,6 @@ public interface EvpnRouteAdminService extends EvpnRouteService {
      */
     void withdrawEvpnRoute(Collection<EvpnRoute> routes);
 
+    void sendEvpnMessage(EvpnRoute evpnRoute);
+
 }

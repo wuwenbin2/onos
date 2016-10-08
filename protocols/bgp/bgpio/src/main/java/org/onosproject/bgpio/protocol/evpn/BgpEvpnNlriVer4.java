@@ -101,7 +101,6 @@ public class BgpEvpnNlriVer4 implements BgpEvpnNlri {
             default:
                 break;
             }
-            log.info("=====evpn nlri routeTypeSpefic is {}", routeTypeSpefic.toString());
             return new BgpEvpnNlriVer4(type, routeTypeSpefic);
         } else {
             return new BgpEvpnNlriVer4();

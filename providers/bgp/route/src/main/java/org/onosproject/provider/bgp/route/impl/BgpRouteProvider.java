@@ -15,8 +15,10 @@ package org.onosproject.provider.bgp.route.impl;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -44,10 +46,15 @@ import org.onosproject.bgpio.types.NlriDetailsType;
 import org.onosproject.bgpio.types.RouteDistinguisher;
 import org.onosproject.bgpio.types.RouteTarget;
 import org.onosproject.core.CoreService;
-import org.onosproject.incubator.net.routing.ResolvedRoute;
-import org.onosproject.incubator.net.routing.RouteEvent;
-import org.onosproject.incubator.net.routing.RouteListener;
-import org.onosproject.incubator.net.routing.RouteService;
+import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
+import org.onosproject.incubator.net.evpnrouting.EvpnRoute.Source;
+import org.onosproject.incubator.net.evpnrouting.EvpnRouteAdminService;
+import org.onosproject.incubator.net.evpnrouting.EvpnRouteEvent;
+import org.onosproject.incubator.net.evpnrouting.EvpnRouteListener;
+import org.onosproject.incubator.net.evpnrouting.EvpnRouteService;
+import org.onosproject.incubator.provider.BgpEvpnRouteProvider;
+import org.onosproject.incubator.provider.BgpEvpnRouteProviderRegistry;
+import org.onosproject.incubator.provider.BgpEvpnRouteProviderService;
 import org.onosproject.mastership.MastershipService;
 import org.onosproject.net.provider.AbstractProvider;
 import org.onosproject.net.provider.ProviderId;
@@ -58,7 +65,8 @@ import org.slf4j.LoggerFactory;
  * Provider which uses an BGP controller to update/delete route.
  */
 @Component(immediate = true)
-public class BgpRouteProvider extends AbstractProvider {
+public class BgpRouteProvider extends AbstractProvider
+        implements BgpEvpnRouteProvider {
 
     /**
      * Creates an instance of BGP route provider.
@@ -72,7 +80,7 @@ public class BgpRouteProvider extends AbstractProvider {
             .getLogger(BgpRouteProvider.class);
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected RouteService routeservice;
+    protected BgpEvpnRouteProviderRegistry providerRegistry;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected BgpController controller;
@@ -84,14 +92,19 @@ public class BgpRouteProvider extends AbstractProvider {
     protected MastershipService mastershipService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected RouteService routeService;
+    protected EvpnRouteService routeService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected EvpnRouteAdminService routeAdminService;
 
     private final InternalRouteListener routeListener = new InternalRouteListener();
     private final InternalBgpRouteListener bgpRouteListener = new InternalBgpRouteListener();
+    private BgpEvpnRouteProviderService providerService;
 
     @Activate
     public void activate() {
         routeService.addListener(routeListener);
+        providerService = providerRegistry.register(this);
         controller.addRouteListener(bgpRouteListener);
         log.info("Bgp Route Provider activate");
     }
@@ -209,9 +222,11 @@ public class BgpRouteProvider extends AbstractProvider {
 
     }
 
-    private class InternalRouteListener implements RouteListener {
+    private class InternalRouteListener implements EvpnRouteListener {
         @Override
-        public void event(RouteEvent event) {
+        public void event(EvpnRouteEvent event) {
+            log.info("Evpn Route provider received event type: {} ",
+                     event.type());
             switch (event.type()) {
             case ROUTE_ADDED:
             case ROUTE_UPDATED:
@@ -224,26 +239,29 @@ public class BgpRouteProvider extends AbstractProvider {
                 break;
             }
         }
+
     }
 
-    public void update(ResolvedRoute subject) {
+    public void update(EvpnRoute evpnRoute) {
         OperationType operationType = OperationType.ADD;
-        String rdString = null;
-        MacAddress macAddress = null;
-        Ip4Address nextHop = null;
-        String rtString = null;
-        int labelInt = 0;
+        String rdString = evpnRoute.routeDistinguisher()
+                .getRouteDistinguisher();
+        MacAddress macAddress = evpnRoute.prefix();
+        Ip4Address nextHop = evpnRoute.nextHop();
+        String rtString = evpnRoute.routeTarget().getRouteTarget();
+        int labelInt = evpnRoute.label().getLabel();
         sendUpdateMessage(operationType, rdString, rtString, nextHop,
                           macAddress, labelInt);
     }
 
-    public void withdraw(ResolvedRoute subject) {
+    public void withdraw(EvpnRoute evpnRoute) {
         OperationType operationType = OperationType.DELETE;
-        String rdString = null;
-        MacAddress macAddress = null;
-        Ip4Address nextHop = null;
-        String rtString = null;
-        int labelInt = 0;
+        String rdString = evpnRoute.routeDistinguisher()
+                .getRouteDistinguisher();
+        MacAddress macAddress = evpnRoute.prefix();
+        Ip4Address nextHop = evpnRoute.nextHop();
+        String rtString = evpnRoute.routeTarget().getRouteTarget();
+        int labelInt = evpnRoute.label().getLabel();
         sendUpdateMessage(operationType, rdString, rtString, nextHop,
                           macAddress, labelInt);
     }
@@ -296,15 +314,23 @@ public class BgpRouteProvider extends AbstractProvider {
             if ((rt != null) && (evpnReachNlri != null)) {
                 for (BgpEvpnNlri nlri : evpnReachNlri) {
                     if (nlri.getRouteType() == RouteType.MAC_IP_ADVERTISEMENT) {
-                        BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri.getRouteTypeSpec();
+                        BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri
+                                .getRouteTypeSpec();
                         MacAddress macAddress = macIpAdvNlri.getMacAddress();
                         RouteDistinguisher rd = macIpAdvNlri
                                 .getRouteDistinguisher();
                         MplsLabel label = macIpAdvNlri.getMplsLable1();
-                        // add route to route system
-                        log.info("Route Provider received bgp packet to route system: {}",
+                        log.info("Route Provider received bgp packet {} to route system.",
                                  macIpAdvNlri.toString());
-
+                        // Add route to route system
+                        Source source = Source.BGP;
+                        EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
+                                                            ipNextHop,
+                                                            rdToString(rd),
+                                                            rtToString(rt),
+                                                            labelToInt(label));
+                        routeAdminService.updateEvpnRoute(Collections
+                                .singleton(evpnRoute));
                     }
                 }
             }
@@ -312,15 +338,40 @@ public class BgpRouteProvider extends AbstractProvider {
             if ((rt != null) && (evpnUnreachNlri != null)) {
                 for (BgpEvpnNlri nlri : evpnUnreachNlri) {
                     if (nlri.getRouteType() == RouteType.MAC_IP_ADVERTISEMENT) {
-                        BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri.getRouteTypeSpec();
+                        BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri
+                                .getRouteTypeSpec();
                         MacAddress macAddress = macIpAdvNlri.getMacAddress();
                         RouteDistinguisher rd = macIpAdvNlri
                                 .getRouteDistinguisher();
                         MplsLabel label = macIpAdvNlri.getMplsLable1();
-                        // delete route from route system
+                        log.info("Route Provider received bgp packet {} and remove from route system.",
+                                 macIpAdvNlri.toString());
+                        // Delete route from route system
+                        Source source = Source.BGP;
+                        // For mpUnreachNlri, nexthop is null
+                        EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
+                                                            ipNextHop,
+                                                            rdToString(rd),
+                                                            rtToString(rt),
+                                                            labelToInt(label));
+                        routeAdminService.withdrawEvpnRoute(Collections
+                                .singleton(evpnRoute));
                     }
                 }
             }
         }
+    }
+
+    @Override
+    public void sendEvpnRoute(EvpnRoute evpnRoute) {
+        OperationType operationType = OperationType.ADD;
+        String rdString = evpnRoute.routeDistinguisher()
+                .getRouteDistinguisher();
+        MacAddress macAddress = evpnRoute.prefix();
+        Ip4Address nextHop = evpnRoute.nextHop();
+        String rtString = evpnRoute.routeTarget().getRouteTarget();
+        int labelInt = evpnRoute.label().getLabel();
+        sendUpdateMessage(operationType, rdString, rtString, nextHop,
+                          macAddress, labelInt);
     }
 }

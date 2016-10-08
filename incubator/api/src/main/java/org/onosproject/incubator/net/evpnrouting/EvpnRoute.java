@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Objects;
 
-import org.onlab.packet.IpAddress;
+import org.onlab.packet.Ip4Address;
 import org.onlab.packet.MacAddress;
 
 /**
@@ -56,13 +56,13 @@ public class EvpnRoute {
 
     private final Source source;
     private final MacAddress prefix;
-    private final IpAddress nextHop;
+    private final Ip4Address nextHop;
     private final RouteDistinguisher rd;
     private final RouteTarget rt;
     private final Label label;
 
     // new add
-    public EvpnRoute(Source source, MacAddress prefix, IpAddress nextHop,
+    public EvpnRoute(Source source, MacAddress prefix, Ip4Address nextHop,
                      RouteDistinguisher rd, RouteTarget rt, Label label) {
         checkNotNull(prefix);
         checkNotNull(nextHop);
@@ -75,6 +75,21 @@ public class EvpnRoute {
         this.rd = rd;
         this.rt = rt;
         this.label = label;
+    }
+
+    public EvpnRoute(Source source, MacAddress prefix, Ip4Address nextHop,
+                     String rdToString, String rtToString, int labelToInt) {
+        checkNotNull(prefix);
+        checkNotNull(nextHop);
+        checkNotNull(rdToString);
+        checkNotNull(rtToString);
+        checkNotNull(labelToInt);
+        this.source = checkNotNull(source);
+        this.prefix = prefix;
+        this.nextHop = nextHop;
+        this.rd = RouteDistinguisher.routeDistinguisher(rdToString);
+        this.rt = RouteTarget.routeTarget(rtToString);
+        this.label = Label.label(labelToInt);
     }
 
     /**
@@ -100,7 +115,7 @@ public class EvpnRoute {
      *
      * @return next hop
      */
-    public IpAddress nextHop() {
+    public Ip4Address nextHop() {
         return nextHop;
     }
 

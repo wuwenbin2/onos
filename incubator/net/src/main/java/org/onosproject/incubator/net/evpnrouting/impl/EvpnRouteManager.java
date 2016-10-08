@@ -43,7 +43,11 @@ import org.onosproject.incubator.net.evpnrouting.EvpnRouteListener;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteService;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteStore;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteStoreDelegate;
+import org.onosproject.incubator.provider.BgpEvpnRouteProvider;
+import org.onosproject.incubator.provider.BgpEvpnRouteProviderRegistry;
+import org.onosproject.incubator.provider.BgpEvpnRouteProviderService;
 import org.onosproject.net.host.HostService;
+import org.onosproject.net.provider.AbstractListenerProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +57,9 @@ import org.slf4j.LoggerFactory;
 @Service
 @Component
 public class EvpnRouteManager
-        implements ListenerService<EvpnRouteEvent, EvpnRouteListener>,
+        extends AbstractListenerProviderRegistry<EvpnRouteEvent, EvpnRouteListener,
+        BgpEvpnRouteProvider, BgpEvpnRouteProviderService>
+        implements BgpEvpnRouteProviderRegistry, ListenerService<EvpnRouteEvent, EvpnRouteListener>,
         EvpnRouteService, EvpnRouteAdminService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -125,12 +131,28 @@ public class EvpnRouteManager
         }
     }
 
+    @Override
+    public void sendEvpnMessage(EvpnRoute evpnRoute) {
+        if (evpnRoute == null) {
+            return;
+        }
+        String scheme = "route";
+        BgpEvpnRouteProvider provider = (BgpEvpnRouteProvider) getProvider(scheme);
+        if (provider != null) {
+            provider.sendEvpnRoute(evpnRoute);
+            return;
+        } else {
+            log.error("Provider not found for {}", scheme);
+            return;
+        }
+    }
+
     /**
      * Posts an event to all listeners.
      *
      * @param event event
      */
-    private void post(EvpnRouteEvent event) {
+    protected void post(EvpnRouteEvent event) {
         log.debug("Sending event {}", event);
         synchronized (this) {
             listeners.values().forEach(l -> l.post(event));
@@ -230,5 +252,11 @@ public class EvpnRouteManager
         public void notify(EvpnRouteEvent event) {
             post(event);
         }
+    }
+
+    @Override
+    protected BgpEvpnRouteProviderService createProviderService(BgpEvpnRouteProvider provider) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

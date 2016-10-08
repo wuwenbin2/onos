@@ -42,6 +42,10 @@ public final class RouteTarget {
         return new RouteTarget(routeTarget);
     }
 
+    public String getRouteTarget() {
+        return routeTarget;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(routeTarget);

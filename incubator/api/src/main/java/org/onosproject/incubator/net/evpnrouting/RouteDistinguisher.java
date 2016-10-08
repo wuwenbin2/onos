@@ -44,6 +44,10 @@ public final class RouteDistinguisher  extends ElementId {
         return new RouteDistinguisher(routeDistinguisher);
     }
 
+    public String getRouteDistinguisher() {
+        return routeDistinguisher;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(routeDistinguisher);

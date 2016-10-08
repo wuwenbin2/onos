@@ -42,6 +42,10 @@ public final class Label {
         return new Label(label);
     }
 
+    public int getLabel() {
+        return label;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(label);
