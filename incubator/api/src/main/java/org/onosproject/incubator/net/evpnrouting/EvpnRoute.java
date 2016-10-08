@@ -34,24 +34,14 @@ public class EvpnRoute {
      */
     public enum Source {
         /**
-         * Route came from the iBGP route source.
+         * Route came from app source.
          */
-        BGP,
+        LOCAL,
 
         /**
-         * Route came from the FPM route source.
+         * Route came from remote bgp peer source.
          */
-        FPM,
-
-        /**
-         * Route can from the static route source.
-         */
-        STATIC,
-
-        /**
-         * Route source was not defined.
-         */
-        UNDEFINED
+        REMOTE,
     }
 
     private final Source source;

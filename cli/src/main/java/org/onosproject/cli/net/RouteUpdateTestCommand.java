@@ -38,7 +38,7 @@ public class RouteUpdateTestCommand extends AbstractShellCommand {
         EvpnRouteAdminService service = AbstractShellCommand
                 .get(EvpnRouteAdminService.class);
 
-        Source source = Source.BGP;
+        Source source = Source.LOCAL;
         MacAddress macAddress = MacAddress.valueOf("e4:68:a3:4e:dc:01");
         Ip4Address nextHop = Ip4Address.valueOf("10.1.1.1");
         RouteDistinguisher rd = RouteDistinguisher.routeDistinguisher("100:1");

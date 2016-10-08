@@ -130,12 +130,16 @@ public class BgpCfgProvider extends AbstractProvider {
         bgpConfig.setVpnv4Capability(config.vpnv4Capability());
         bgpConfig.setEvpnCapability(config.evpnCapability());
 
-        if (config.flowSpecCapability().equals("IPV4")) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4);
-        } else if (config.flowSpecCapability().equals("VPNV4")) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.VPNV4);
-        } else if (config.flowSpecCapability().equals("IPV4_VPNV4")) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4_VPNV4);
+        if (config.flowSpecCapability() != null) {
+            if (config.flowSpecCapability().equals("IPV4")) {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4);
+            } else if (config.flowSpecCapability().equals("VPNV4")) {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.VPNV4);
+            } else if (config.flowSpecCapability().equals("IPV4_VPNV4")) {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4_VPNV4);
+            } else {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
+            }
         } else {
             bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
         }
@@ -182,12 +186,16 @@ public class BgpCfgProvider extends AbstractProvider {
         bgpConfig.setVpnv4Capability(config.vpnv4Capability());
         bgpConfig.setEvpnCapability(config.evpnCapability());
 
-        if (config.flowSpecCapability().equals("IPV4")) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4);
-        } else if (config.flowSpecCapability().equals("VPNV4")) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.VPNV4);
-        } else if (config.flowSpecCapability().equals("IPV4_VPNV4")) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4_VPNV4);
+        if (config.flowSpecCapability() != null) {
+            if (config.flowSpecCapability().equals("IPV4")) {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4);
+            } else if (config.flowSpecCapability().equals("VPNV4")) {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.VPNV4);
+            } else if (config.flowSpecCapability().equals("IPV4_VPNV4")) {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4_VPNV4);
+            } else {
+                bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
+            }
         } else {
             bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
         }

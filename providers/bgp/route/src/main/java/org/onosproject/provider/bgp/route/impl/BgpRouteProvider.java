@@ -49,9 +49,6 @@ import org.onosproject.core.CoreService;
 import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
 import org.onosproject.incubator.net.evpnrouting.EvpnRoute.Source;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteAdminService;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteEvent;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteListener;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteService;
 import org.onosproject.incubator.provider.BgpEvpnRouteProvider;
 import org.onosproject.incubator.provider.BgpEvpnRouteProviderRegistry;
 import org.onosproject.incubator.provider.BgpEvpnRouteProviderService;
@@ -92,18 +89,13 @@ public class BgpRouteProvider extends AbstractProvider
     protected MastershipService mastershipService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnRouteService routeService;
-
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected EvpnRouteAdminService routeAdminService;
 
-    private final InternalRouteListener routeListener = new InternalRouteListener();
     private final InternalBgpRouteListener bgpRouteListener = new InternalBgpRouteListener();
     private BgpEvpnRouteProviderService providerService;
 
     @Activate
     public void activate() {
-        routeService.addListener(routeListener);
         providerService = providerRegistry.register(this);
         controller.addRouteListener(bgpRouteListener);
         log.info("Bgp Route Provider activate");
@@ -111,7 +103,6 @@ public class BgpRouteProvider extends AbstractProvider
 
     @Deactivate
     public void deactivate() {
-        routeService.removeListener(routeListener);
         controller.removeRouteListener(bgpRouteListener);
         log.info("Bgp Route Provider deactivate");
     }
@@ -146,7 +137,7 @@ public class BgpRouteProvider extends AbstractProvider
         eVpnComponents.add(nlri);
 
         controller.getPeers().forEach(peer -> {
-            log.info("Send route update to peer {}", peer);
+            log.info("Send route update eVpnComponents {} to peer {}", eVpnComponents, peer);
             peer.updateEvpn(operationType, nextHop, extCom, eVpnComponents);
         });
 
@@ -219,26 +210,6 @@ public class BgpRouteProvider extends AbstractProvider
     private static int labelToInt(MplsLabel label) {
         byte[] b = label.getMplsLabel();
         return b[2] & 0xFF | (b[1] & 0xFF) << 8 | (b[0] & 0xFF) << 16;
-
-    }
-
-    private class InternalRouteListener implements EvpnRouteListener {
-        @Override
-        public void event(EvpnRouteEvent event) {
-            log.info("Evpn Route provider received event type: {} ",
-                     event.type());
-            switch (event.type()) {
-            case ROUTE_ADDED:
-            case ROUTE_UPDATED:
-                update(event.subject());
-                break;
-            case ROUTE_REMOVED:
-                withdraw(event.subject());
-                break;
-            default:
-                break;
-            }
-        }
 
     }
 
@@ -323,7 +294,7 @@ public class BgpRouteProvider extends AbstractProvider
                         log.info("Route Provider received bgp packet {} to route system.",
                                  macIpAdvNlri.toString());
                         // Add route to route system
-                        Source source = Source.BGP;
+                        Source source = Source.REMOTE;
                         EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
                                                             ipNextHop,
                                                             rdToString(rd),
@@ -347,7 +318,7 @@ public class BgpRouteProvider extends AbstractProvider
                         log.info("Route Provider received bgp packet {} and remove from route system.",
                                  macIpAdvNlri.toString());
                         // Delete route from route system
-                        Source source = Source.BGP;
+                        Source source = Source.REMOTE;
                         // For mpUnreachNlri, nexthop is null
                         EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
                                                             ipNextHop,
