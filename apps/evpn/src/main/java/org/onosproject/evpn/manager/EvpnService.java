@@ -15,6 +15,15 @@
  */
 package org.onosproject.evpn.manager;
 
-public interface EvpnService {
+import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
+import org.onosproject.net.Host;
 
+public interface EvpnService {
+    void onBgpEvpnRouteUpdate(EvpnRoute route);
+
+    void onBgpEvpnRouteDelete(EvpnRoute route);
+
+    void onHostDetected(Host host);
+
+    void onHostVanished(Host host);
 }
