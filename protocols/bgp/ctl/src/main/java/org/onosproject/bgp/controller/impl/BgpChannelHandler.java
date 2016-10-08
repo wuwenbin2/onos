@@ -28,33 +28,45 @@ import org.jboss.netty.handler.timeout.ReadTimeoutException;
 import org.jboss.netty.handler.timeout.ReadTimeoutHandler;
 import org.onlab.packet.Ip4Address;
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onosproject.bgp.controller.BgpCfg;
 import org.onosproject.bgp.controller.BgpController;
 import org.onosproject.bgp.controller.BgpId;
 import org.onosproject.bgp.controller.BgpPeer;
+import org.onosproject.bgp.controller.BgpPeer.OperationType;
 import org.onosproject.bgp.controller.BgpPeerCfg;
 import org.onosproject.bgp.controller.impl.BgpControllerImpl.BgpPeerManagerImpl;
 import org.onosproject.bgpio.exceptions.BgpParseException;
+import org.onosproject.bgpio.protocol.BgpEvpnNlri;
 import org.onosproject.bgpio.protocol.BgpFactory;
 import org.onosproject.bgpio.protocol.BgpMessage;
 import org.onosproject.bgpio.protocol.BgpOpenMsg;
 import org.onosproject.bgpio.protocol.BgpType;
 import org.onosproject.bgpio.protocol.BgpVersion;
+import org.onosproject.bgpio.protocol.evpn.BgpEvpnNlriVer4;
+import org.onosproject.bgpio.protocol.evpn.BgpMacIpAdvNlriVer4;
+import org.onosproject.bgpio.protocol.evpn.RouteType;
+import org.onosproject.bgpio.types.BgpEncap;
 import org.onosproject.bgpio.types.BgpErrorType;
 import org.onosproject.bgpio.types.BgpValueType;
+import org.onosproject.bgpio.types.EthernetSegmentidentifier;
 import org.onosproject.bgpio.types.FourOctetAsNumCapabilityTlv;
+import org.onosproject.bgpio.types.MplsLabel;
 import org.onosproject.bgpio.types.MultiProtocolExtnCapabilityTlv;
+import org.onosproject.bgpio.types.RouteDistinguisher;
+import org.onosproject.bgpio.types.RouteTarget;
 import org.onosproject.bgpio.types.RpdCapabilityTlv;
 import org.onosproject.bgpio.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
@@ -86,7 +98,8 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
     static final short AFI = 16388;
     static final byte RES = 0;
     static final byte SAFI = 71;
-    static final byte MAX_UNSUPPORTED_CAPABILITY = 5;
+    static final byte MAX_UNSUPPORTED_CAPABILITY = 6;
+
 
     // State needs to be volatile because the HandshakeTimeoutHandler
     // needs to check if the handshake is complete
@@ -325,6 +338,7 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
                 log.debug("Message received in established state " + m.getType());
                 // dispatch the message
                 h.dispatchMessage(m);
+//                h.sendUpdateMessage();
             }
         };
 
@@ -673,6 +687,9 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
 
         bgpId = Ip4Address.valueOf(bgpconfig.getRouterId()).toInt();
 
+        boolean vpnv4Cability = bgpconfig.vpnv4Capability();
+        boolean evpnCability = bgpconfig.evpnCapability();
+
         if (flowSpec == BgpCfg.FlowSpec.IPV4) {
             flowSpecStatus = true;
         } else if (flowSpec == BgpCfg.FlowSpec.VPNV4) {
@@ -688,9 +705,69 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
                 .setLargeAsCapabilityTlv(bgpconfig.getLargeASCapability())
                 .setFlowSpecCapabilityTlv(flowSpecStatus)
                 .setVpnFlowSpecCapabilityTlv(vpnFlowSpecStatus)
-                .setFlowSpecRpdCapabilityTlv(bgpconfig.flowSpecRpdCapability()).build();
+                .setFlowSpecRpdCapabilityTlv(bgpconfig.flowSpecRpdCapability())
+                .setVpnv4CapabilityTlv(vpnv4Cability)
+                .setEvpnCapabilityTlv(evpnCability).build();
         log.debug("Sending open message to {}", channel.getRemoteAddress());
         channel.write(Collections.singletonList(msg));
+
+    }
+
+    /**
+     * Send update message to the peer.
+     *
+     * @throws IOException, BgpParseException
+     */
+    private void sendUpdateMessage() throws IOException, BgpParseException {
+
+        OperationType operationType = OperationType.ADD;
+        List<BgpEvpnNlri> eVpnComponents = new ArrayList<BgpEvpnNlri>();
+        EthernetSegmentidentifier esi = new EthernetSegmentidentifier(new byte[10]);
+        int ethernetTagID = 0;
+        byte[] rdBytes = new byte[8];
+        rdBytes[3] = 1;
+        rdBytes[7] = 1;
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+        buffer.put(rdBytes, 0, rdBytes.length);
+        buffer.flip();
+        RouteDistinguisher rd = new RouteDistinguisher(buffer.getLong());
+        MacAddress macAddress = MacAddress.valueOf("e4:68:a3:4e:dc:01");
+        // byte ipAddressLength = 32;
+        // byte[] addr = new byte[] {0x64, 0x01, 0x01, 0x01 };
+        // InetAddress ipAddress = InetAddress.getByAddress(addr);
+        byte ipAddressLength = 0;
+        InetAddress ipAddress = null;
+        byte[] label1 = new byte[] {0x02, 0x71, 0x01 };
+        MplsLabel mplsLabel1 = new MplsLabel(label1);
+        // byte[] label2 = new byte[] {0x04, (byte) 0xe2, 0x01 };
+        // MplsLabel mplsLabel2 = new MplsLabel(label2);
+        MplsLabel mplsLabel2 = null;
+
+        BgpMacIpAdvNlriVer4 routeTypeSpec = new BgpMacIpAdvNlriVer4(rd, esi,
+                                                                    ethernetTagID,
+                                                                    macAddress,
+                                                                    ipAddressLength,
+                                                                    ipAddress,
+                                                                    mplsLabel1,
+                                                                    mplsLabel2);
+        BgpEvpnNlri nlri = new BgpEvpnNlriVer4(RouteType.MAC_IP_ADVERTISEMENT
+                .getType(), routeTypeSpec);
+        eVpnComponents.add(nlri);
+        Ip4Address nextHop = Ip4Address.valueOf("10.0.2.27");
+
+        List<BgpValueType> extCom = new ArrayList<BgpValueType>();
+        short rtType = 0x02;
+        byte[] rtBytes = new byte[6];
+        rtBytes[1] = 1;
+        rtBytes[5] = 1;
+        RouteTarget rTarget = new RouteTarget(rtType, rtBytes);
+        extCom.add(rTarget);
+        BgpEncap enc = new BgpEncap(0, (short) 0x08);
+        extCom.add(enc);
+        BgpPeerImpl peer = (BgpPeerImpl) bgpPeer;
+        peer.updateEvpn(operationType, nextHop, extCom, eVpnComponents);
+
+        log.info("Sending update message to {}", channel.getRemoteAddress());
 
     }
 
@@ -803,6 +880,8 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
         boolean isMultiProtocolLsCapability = false;
         boolean isMultiProtocolFlowSpecCapability = false;
         boolean isMultiProtocolVpnFlowSpecCapability = false;
+        boolean isVpnv4CapabilityCfg = h.bgpconfig.vpnv4Capability();
+        boolean isMultiProtocolVpnv4CapabilityCfg = false;
         BgpCfg.FlowSpec flowSpec = h.bgpconfig.flowSpecCapability();
 
         if (flowSpec == BgpCfg.FlowSpec.IPV4) {
@@ -824,6 +903,10 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
 
                 if (Constants.VPN_SAFI_FLOWSPEC_VALUE == tempCapability.getSafi()) {
                     isMultiProtocolVpnFlowSpecCapability = true;
+                }
+
+                if (Constants.SAFI_VPNV4_VALUE == tempCapability.getSafi()) {
+                    isMultiProtocolVpnv4CapabilityCfg = true;
                 }
 
                 if (SAFI == tempCapability.getSafi()) {
@@ -891,6 +974,14 @@ class BgpChannelHandler extends IdleStateAwareChannelHandler {
 
         if ((isFlowSpecRpdCapabilityCfg)) {
             if (!isRpdCapabilityExits) {
+                tempTlv = new MultiProtocolExtnCapabilityTlv(Constants.AFI_VPNV4_VALUE,
+                                                             RES, Constants.SAFI_VPNV4_VALUE);
+                unSupportedCapabilityTlv.add(tempTlv);
+            }
+        }
+
+        if (isVpnv4CapabilityCfg) {
+            if (!isMultiProtocolVpnv4CapabilityCfg) {
                 tempTlv = new RpdCapabilityTlv(Constants.RPD_CAPABILITY_SEND_VALUE);
                 unSupportedCapabilityTlv.add(tempTlv);
             }

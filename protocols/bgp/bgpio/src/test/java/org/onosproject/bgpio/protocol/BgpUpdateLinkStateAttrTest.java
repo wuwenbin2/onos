@@ -157,7 +157,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -271,7 +271,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -384,7 +384,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -498,7 +498,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -615,7 +615,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -734,7 +734,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -848,7 +848,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -966,7 +966,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1084,7 +1084,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1196,7 +1196,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1309,7 +1309,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1421,7 +1421,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1534,7 +1534,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1647,7 +1647,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1760,7 +1760,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1861,7 +1861,7 @@ public class BgpUpdateLinkStateAttrTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1953,7 +1953,7 @@ public class BgpUpdateLinkStateAttrTest {
         testPathAttribute = listIterator.next();
         mpReach = (MpReachNlri) testPathAttribute;
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();

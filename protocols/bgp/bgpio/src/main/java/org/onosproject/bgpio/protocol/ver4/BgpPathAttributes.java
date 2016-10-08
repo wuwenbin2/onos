@@ -18,7 +18,6 @@ package org.onosproject.bgpio.protocol.ver4;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.onosproject.bgpio.exceptions.BgpParseException;
 import org.onosproject.bgpio.types.As4Path;
@@ -39,8 +38,8 @@ import org.onosproject.bgpio.util.Constants;
 import org.onosproject.bgpio.types.attr.WideCommunity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.google.common.base.MoreObjects;
+
 
 /**
  * Provides Implementation of BGP Path Attribute.
@@ -288,4 +287,5 @@ public class BgpPathAttributes {
                 .add("pathAttribute", pathAttribute)
                 .toString();
     }
+
 }

@@ -59,6 +59,8 @@ public abstract class BgpMessageVer4 {
                                        cb.readableBytes());
             }
             if (cb.readableBytes() > MAXIMUM_PACKET_LENGTH) {
+                log.info("Received buffer length is {}, content is {},",
+                         cb.readableBytes(), cb.array());
                 log.error("Packet length should not exceed {}.", MAXIMUM_PACKET_LENGTH);
                 Validation.validateLen(BgpErrorType.MESSAGE_HEADER_ERROR, BgpErrorType.BAD_MESSAGE_LENGTH,
                                        cb.readableBytes());

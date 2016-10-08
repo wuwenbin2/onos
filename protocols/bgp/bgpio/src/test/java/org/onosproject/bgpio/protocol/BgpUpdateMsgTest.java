@@ -660,7 +660,7 @@ public class BgpUpdateMsgTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -784,7 +784,7 @@ public class BgpUpdateMsgTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -906,7 +906,7 @@ public class BgpUpdateMsgTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1774,7 +1774,7 @@ public class BgpUpdateMsgTest {
         assertThat(mpReach.getType(), is((short) 14));
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1875,7 +1875,7 @@ public class BgpUpdateMsgTest {
         testPathAttribute = listIterator.next();
         mpReach = (MpReachNlri) testPathAttribute;
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
 
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
@@ -1973,7 +1973,7 @@ public class BgpUpdateMsgTest {
         mpReach = (MpReachNlri) testPathAttribute;
 
         List<BgpLSNlri> testMpReachNlri = new LinkedList<>();
-        testMpReachNlri = mpReach.mpReachNlri();
+        testMpReachNlri = mpReach.bgpLSNlri();
         ListIterator<BgpLSNlri> list1 = testMpReachNlri.listIterator();
         BgpLSNlri testnlri =  list1.next();
         ProtocolType protocolId = org.onosproject.bgpio.protocol.linkstate.
