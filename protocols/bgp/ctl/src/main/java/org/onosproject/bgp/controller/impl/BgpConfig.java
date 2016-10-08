@@ -143,7 +143,7 @@ public class BgpConfig implements BgpCfg {
 
     @Override
     public boolean evpnCapability() {
-        return this.vpnv4Capability;
+        return this.evpnCapability;
     }
 
     @Override
