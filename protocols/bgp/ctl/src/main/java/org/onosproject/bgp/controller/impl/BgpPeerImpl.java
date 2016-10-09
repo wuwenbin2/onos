@@ -20,12 +20,14 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 import org.jboss.netty.channel.Channel;
+import org.onlab.packet.Ip4Address;
 import org.onlab.packet.IpAddress;
 import org.onosproject.bgp.controller.BgpController;
 import org.onosproject.bgp.controller.BgpLocalRib;
 import org.onosproject.bgp.controller.BgpPeer;
 import org.onosproject.bgp.controller.BgpSessionInfo;
 import org.onosproject.bgpio.exceptions.BgpParseException;
+import org.onosproject.bgpio.protocol.BgpEvpnNlri;
 import org.onosproject.bgpio.protocol.BgpFactories;
 import org.onosproject.bgpio.protocol.BgpFactory;
 import org.onosproject.bgpio.protocol.BgpLSNlri;
@@ -62,7 +64,8 @@ import java.util.ListIterator;
 import java.util.concurrent.RejectedExecutionException;
 
 /**
- * BGPPeerImpl implements BGPPeer, maintains peer information and store updates in RIB .
+ * BGPPeerImpl implements BGPPeer, maintains peer information and store updates
+ * in RIB .
  */
 public class BgpPeerImpl implements BgpPeer {
 
@@ -108,16 +111,17 @@ public class BgpPeerImpl implements BgpPeer {
     /**
      * Initialize peer.
      *
-     *@param bgpController controller instance
-     *@param sessionInfo bgp session info
-     *@param pktStats packet statistics
+     * @param bgpController controller instance
+     * @param sessionInfo bgp session info
+     * @param pktStats packet statistics
      */
-    public BgpPeerImpl(BgpController bgpController, BgpSessionInfo sessionInfo, BgpPacketStatsImpl pktStats) {
+    public BgpPeerImpl(BgpController bgpController, BgpSessionInfo sessionInfo,
+                       BgpPacketStatsImpl pktStats) {
         this.bgpController = bgpController;
         this.sessionInfo = sessionInfo;
         this.pktStats = pktStats;
-        this.bgplocalRib =  bgpController.bgpLocalRib();
-        this.bgplocalRibVpn =  bgpController.bgpLocalRibVpn();
+        this.bgplocalRib = bgpController.bgpLocalRib();
+        this.bgplocalRibVpn = bgpController.bgpLocalRibVpn();
         this.adjRib = new AdjRibIn();
         this.vpnAdjRib = new VpnAdjRibIn();
     }
@@ -130,7 +134,8 @@ public class BgpPeerImpl implements BgpPeer {
      * @param sAfi subsequent address family identifier
      * @return true if capability is supported, otherwise false
      */
-    public final boolean isCapabilitySupported(short type, short afi, byte sAfi) {
+    public final boolean isCapabilitySupported(short type, short afi,
+                                               byte sAfi) {
 
         List<BgpValueType> capability = sessionInfo.remoteBgpCapability();
         ListIterator<BgpValueType> listIterator = capability.listIterator();
@@ -163,31 +168,35 @@ public class BgpPeerImpl implements BgpPeer {
      * @param flowSpec flow specification details
      * @param wideCommunity for route policy
      */
-    public final void sendFlowSpecUpdateMessageToPeer(FlowSpecOperation operType, BgpFlowSpecRouteKey routeKey,
-                                                      BgpFlowSpecNlri flowSpec, WideCommunity wideCommunity) {
+    public final void sendFlowSpecUpdateMessageToPeer(OperationType operType,
+                                                      BgpFlowSpecRouteKey routeKey,
+                                                      BgpFlowSpecNlri flowSpec,
+                                                      WideCommunity wideCommunity) {
 
         List<BgpValueType> attributesList = new LinkedList<>();
         byte sessionType = sessionInfo.isIbgpSession() ? (byte) 0 : (byte) 1;
         byte sAfi = Constants.SAFI_FLOWSPEC_VALUE;
 
         boolean isFsCapabilitySet = isCapabilitySupported(MultiProtocolExtnCapabilityTlv.TYPE,
-                                                        Constants.AFI_FLOWSPEC_VALUE,
-                                                        Constants.SAFI_FLOWSPEC_VALUE);
+                                                          Constants.AFI_FLOWSPEC_VALUE,
+                                                          Constants.SAFI_FLOWSPEC_VALUE);
 
         boolean isVpnFsCapabilitySet = isCapabilitySupported(MultiProtocolExtnCapabilityTlv.TYPE,
-                                                        Constants.AFI_FLOWSPEC_VALUE,
-                                                        Constants.VPN_SAFI_FLOWSPEC_VALUE);
+                                                             Constants.AFI_FLOWSPEC_VALUE,
+                                                             Constants.VPN_SAFI_FLOWSPEC_VALUE);
 
         boolean isRpdCapabilitySet = isCapabilitySupported(RpdCapabilityTlv.TYPE,
-                                                        Constants.AFI_FLOWSPEC_RPD_VALUE,
-                                                        Constants.SAFI_FLOWSPEC_RPD_VALUE);
+                                                           Constants.AFI_FLOWSPEC_RPD_VALUE,
+                                                           Constants.SAFI_FLOWSPEC_RPD_VALUE);
 
         boolean isVpnRpdCapabilitySet = isCapabilitySupported(RpdCapabilityTlv.TYPE,
-                                                        Constants.AFI_FLOWSPEC_RPD_VALUE,
-                                                        Constants.VPN_SAFI_FLOWSPEC_RDP_VALUE);
+                                                              Constants.AFI_FLOWSPEC_RPD_VALUE,
+                                                              Constants.VPN_SAFI_FLOWSPEC_RDP_VALUE);
 
-        if ((!isFsCapabilitySet) && (!isVpnFsCapabilitySet) && (!isRpdCapabilitySet) && (!isVpnRpdCapabilitySet)) {
-            log.debug("Peer do not support BGP flow spec capability", channel.getRemoteAddress());
+        if ((!isFsCapabilitySet) && (!isVpnFsCapabilitySet)
+                && (!isRpdCapabilitySet) && (!isVpnRpdCapabilitySet)) {
+            log.debug("Peer do not support BGP flow spec capability",
+                      channel.getRemoteAddress());
             return;
         }
 
@@ -227,42 +236,144 @@ public class BgpPeerImpl implements BgpPeer {
             attributesList.add(wideCommunity);
         }
 
-        if (operType == FlowSpecOperation.ADD) {
-            attributesList.add(new MpReachNlri(flowSpec, Constants.AFI_FLOWSPEC_VALUE, sAfi));
-        } else if (operType == FlowSpecOperation.DELETE) {
-            attributesList.add(new MpUnReachNlri(flowSpec, Constants.AFI_FLOWSPEC_VALUE, sAfi));
+        if (operType == OperationType.ADD) {
+            attributesList
+                    .add(new MpReachNlri(flowSpec, Constants.AFI_FLOWSPEC_VALUE,
+                                         sAfi));
+        } else if (operType == OperationType.DELETE) {
+            attributesList
+                    .add(new MpUnReachNlri(flowSpec,
+                                           Constants.AFI_FLOWSPEC_VALUE, sAfi));
         }
 
-        BgpMessage msg = Controller.getBgpMessageFactory4().updateMessageBuilder()
-                                                           .setBgpPathAttributes(attributesList).build();
+        BgpMessage msg = Controller.getBgpMessageFactory4()
+                .updateMessageBuilder().setBgpPathAttributes(attributesList)
+                .build();
 
-        log.debug("Sending Flow spec Update message to {}", channel.getRemoteAddress());
+        log.debug("Sending Flow spec Update message to {}",
+                  channel.getRemoteAddress());
         channel.write(Collections.singletonList(msg));
     }
 
     @Override
-    public void updateFlowSpec(FlowSpecOperation operType, BgpFlowSpecRouteKey routeKey,
-                                     BgpFlowSpecNlri flowSpec, WideCommunity wideCommunity) {
-        Preconditions.checkNotNull(operType, "flow specification operation type cannot be null");
-        Preconditions.checkNotNull(routeKey, "flow specification prefix cannot be null");
-        Preconditions.checkNotNull(flowSpec, "flow specification details cannot be null");
-        Preconditions.checkNotNull(flowSpec.fsActionTlv(), "flow specification action cannot be null");
+    public void updateFlowSpec(OperationType operType,
+                               BgpFlowSpecRouteKey routeKey,
+                               BgpFlowSpecNlri flowSpec,
+                               WideCommunity wideCommunity) {
+        Preconditions
+                .checkNotNull(operType,
+                              "flow specification operation type cannot be null");
+        Preconditions.checkNotNull(routeKey,
+                                   "flow specification prefix cannot be null");
+        Preconditions.checkNotNull(flowSpec,
+                                   "flow specification details cannot be null");
+        Preconditions.checkNotNull(flowSpec.fsActionTlv(),
+                                   "flow specification action cannot be null");
 
-        sendFlowSpecUpdateMessageToPeer(operType, routeKey, flowSpec, wideCommunity);
+        sendFlowSpecUpdateMessageToPeer(operType, routeKey, flowSpec,
+                                        wideCommunity);
     }
 
     @Override
-    public void buildAdjRibIn(List<BgpValueType> pathAttr) throws BgpParseException {
+    public void updateEvpn(OperationType operType, Ip4Address nextHop,
+                           List<BgpValueType> extCommunit,
+                           List<BgpEvpnNlri> eVpnComponents) {
+        Preconditions.checkNotNull(operType, "Operation type cannot be null");
+        Preconditions.checkNotNull(eVpnComponents, "Evpn nlri cannot be null");
+        Preconditions.checkNotNull(nextHop, "Next hop cannot be null");
+        sendEvpnUpdateMessageToPeer(operType, nextHop, extCommunit, eVpnComponents);
+    }
+
+    private void sendEvpnUpdateMessageToPeer(OperationType operType,
+                                             Ip4Address nextHop,
+                                             List<BgpValueType> extCommunit,
+                                             List<BgpEvpnNlri> eVpnComponents) {
+        List<BgpValueType> attributesList = new LinkedList<>();
+        byte sessionType = sessionInfo.isIbgpSession() ? (byte) 0 : (byte) 1;
+        short afi = Constants.AFI_EVPN_VALUE;
+        byte safi = Constants.SAFI_EVPN_VALUE;
+        boolean isEvpnCapabilitySet = isCapabilitySupported(MultiProtocolExtnCapabilityTlv.TYPE,
+                                                            afi, safi);
+
+        if (!isEvpnCapabilitySet) {
+            log.debug("Peer do not support BGP Evpn capability",
+                      channel.getRemoteAddress());
+            return;
+        }
+        attributesList.add(new Origin((byte) 0));
+
+        if (sessionType != 0) {
+            // EBGP
+            if (!bgpController.getConfig().getLargeASCapability()) {
+                List<Short> aspathSet = new ArrayList<>();
+                List<Short> aspathSeq = new ArrayList<>();
+                aspathSeq.add((short) bgpController.getConfig().getAsNumber());
+
+                AsPath asPath = new AsPath(aspathSet, aspathSeq);
+                attributesList.add(asPath);
+            } else {
+                List<Integer> aspathSet = new ArrayList<>();
+                List<Integer> aspathSeq = new ArrayList<>();
+                aspathSeq.add(bgpController.getConfig().getAsNumber());
+
+                As4Path as4Path = new As4Path(aspathSet, aspathSeq);
+                attributesList.add(as4Path);
+            }
+        } else {
+            attributesList.add(new AsPath());
+        }
+
+        attributesList.add(new BgpExtendedCommunity(extCommunit));
+        if (operType == OperationType.ADD) {
+            attributesList
+                    .add(new MpReachNlri(eVpnComponents, afi, safi, nextHop));
+        } else if (operType == OperationType.DELETE) {
+            attributesList.add(new MpUnReachNlri(eVpnComponents, afi, safi));
+        }
+
+        BgpMessage msg = Controller.getBgpMessageFactory4()
+                .updateMessageBuilder().setBgpPathAttributes(attributesList)
+                .build();
+        channel.write(Collections.singletonList(msg));
+    }
+
+    @Override
+    public void buildAdjRibIn(List<BgpValueType> pathAttr)
+            throws BgpParseException {
         ListIterator<BgpValueType> iterator = pathAttr.listIterator();
         while (iterator.hasNext()) {
             BgpValueType attr = iterator.next();
             if (attr instanceof MpReachNlri) {
-                List<BgpLSNlri> nlri = ((MpReachNlri) attr).mpReachNlri();
-                callAdd(this, nlri, pathAttr);
+                MpReachNlri mpReachNlri = (MpReachNlri) attr;
+                switch (mpReachNlri.getNlriDetailsType()) {
+                case LINK_STATE:
+                    List<BgpLSNlri> lsNlri = ((MpReachNlri) attr).bgpLSNlri();
+                    callAdd(this, lsNlri, pathAttr);
+                    break;
+                case EVPN:
+                    List<BgpEvpnNlri> evpnNlri = ((MpReachNlri) attr)
+                            .bgpEvpnNlri();
+                    break;
+                default:
+                    break;
+                }
+
             }
             if (attr instanceof MpUnReachNlri) {
-                List<BgpLSNlri> nlri = ((MpUnReachNlri) attr).mpUnReachNlri();
-                callRemove(this, nlri);
+                MpReachNlri mpUnReachNlri = (MpReachNlri) attr;
+                switch (mpUnReachNlri.getNlriDetailsType()) {
+                case LINK_STATE:
+                    List<BgpLSNlri> lsNlri = ((MpUnReachNlri) attr).bgpLSNlri();
+                    callRemove(this, lsNlri);
+                    break;
+                case EVPN:
+                    List<BgpEvpnNlri> evpnNlri = ((MpUnReachNlri) attr)
+                            .bgpEvpnNlri();
+                    break;
+                default:
+                    break;
+
+                }
             }
         }
     }
@@ -275,40 +386,53 @@ public class BgpPeerImpl implements BgpPeer {
      * @param pathAttr list of BGP path attributes
      * @throws BgpParseException throws exception
      */
-    public void callAdd(BgpPeerImpl peerImpl, List<BgpLSNlri> nlri, List<BgpValueType> pathAttr)
+    public void callAdd(BgpPeerImpl peerImpl, List<BgpLSNlri> nlri,
+                        List<BgpValueType> pathAttr)
             throws BgpParseException {
         ListIterator<BgpLSNlri> listIterator = nlri.listIterator();
         while (listIterator.hasNext()) {
             BgpLSNlri nlriInfo = listIterator.next();
             if (nlriInfo instanceof BgpNodeLSNlriVer4) {
-                PathAttrNlriDetails details = setPathAttrDetails(nlriInfo, pathAttr);
+                PathAttrNlriDetails details = setPathAttrDetails(nlriInfo,
+                                                                 pathAttr);
                 if (!((BgpNodeLSNlriVer4) nlriInfo).isVpnPresent()) {
                     adjRib.add(nlriInfo, details);
                     bgplocalRib.add(sessionInfo(), nlriInfo, details);
                 } else {
-                    vpnAdjRib.addVpn(nlriInfo, details, ((BgpNodeLSNlriVer4) nlriInfo).getRouteDistinguisher());
+                    vpnAdjRib.addVpn(nlriInfo, details,
+                                     ((BgpNodeLSNlriVer4) nlriInfo)
+                                             .getRouteDistinguisher());
                     bgplocalRibVpn.add(sessionInfo(), nlriInfo, details,
-                                       ((BgpNodeLSNlriVer4) nlriInfo).getRouteDistinguisher());
+                                       ((BgpNodeLSNlriVer4) nlriInfo)
+                                               .getRouteDistinguisher());
                 }
             } else if (nlriInfo instanceof BgpLinkLsNlriVer4) {
-                PathAttrNlriDetails details = setPathAttrDetails(nlriInfo, pathAttr);
+                PathAttrNlriDetails details = setPathAttrDetails(nlriInfo,
+                                                                 pathAttr);
                 if (!((BgpLinkLsNlriVer4) nlriInfo).isVpnPresent()) {
                     adjRib.add(nlriInfo, details);
                     bgplocalRib.add(sessionInfo(), nlriInfo, details);
                 } else {
-                    vpnAdjRib.addVpn(nlriInfo, details, ((BgpLinkLsNlriVer4) nlriInfo).getRouteDistinguisher());
+                    vpnAdjRib.addVpn(nlriInfo, details,
+                                     ((BgpLinkLsNlriVer4) nlriInfo)
+                                             .getRouteDistinguisher());
                     bgplocalRibVpn.add(sessionInfo(), nlriInfo, details,
-                                       ((BgpLinkLsNlriVer4) nlriInfo).getRouteDistinguisher());
+                                       ((BgpLinkLsNlriVer4) nlriInfo)
+                                               .getRouteDistinguisher());
                 }
             } else if (nlriInfo instanceof BgpPrefixIPv4LSNlriVer4) {
-                PathAttrNlriDetails details = setPathAttrDetails(nlriInfo, pathAttr);
+                PathAttrNlriDetails details = setPathAttrDetails(nlriInfo,
+                                                                 pathAttr);
                 if (!((BgpPrefixIPv4LSNlriVer4) nlriInfo).isVpnPresent()) {
                     adjRib.add(nlriInfo, details);
                     bgplocalRib.add(sessionInfo(), nlriInfo, details);
                 } else {
-                    vpnAdjRib.addVpn(nlriInfo, details, ((BgpPrefixIPv4LSNlriVer4) nlriInfo).getRouteDistinguisher());
+                    vpnAdjRib.addVpn(nlriInfo, details,
+                                     ((BgpPrefixIPv4LSNlriVer4) nlriInfo)
+                                             .getRouteDistinguisher());
                     bgplocalRibVpn.add(sessionInfo(), nlriInfo, details,
-                                       ((BgpPrefixIPv4LSNlriVer4) nlriInfo).getRouteDistinguisher());
+                                       ((BgpPrefixIPv4LSNlriVer4) nlriInfo)
+                                               .getRouteDistinguisher());
                 }
             }
         }
@@ -322,7 +446,8 @@ public class BgpPeerImpl implements BgpPeer {
      * @return details object of PathAttrNlriDetails
      * @throws BgpParseException throw exception
      */
-    public PathAttrNlriDetails setPathAttrDetails(BgpLSNlri nlriInfo, List<BgpValueType> pathAttr)
+    public PathAttrNlriDetails setPathAttrDetails(BgpLSNlri nlriInfo,
+                                                  List<BgpValueType> pathAttr)
             throws BgpParseException {
         PathAttrNlriDetails details = new PathAttrNlriDetails();
         details.setProtocolID(nlriInfo.getProtocolId());
@@ -338,7 +463,8 @@ public class BgpPeerImpl implements BgpPeer {
      * @param nlri NLRI information
      * @throws BgpParseException BGP parse exception
      */
-    public void callRemove(BgpPeerImpl peerImpl, List<BgpLSNlri> nlri) throws BgpParseException {
+    public void callRemove(BgpPeerImpl peerImpl, List<BgpLSNlri> nlri)
+            throws BgpParseException {
         ListIterator<BgpLSNlri> listIterator = nlri.listIterator();
         while (listIterator.hasNext()) {
             BgpLSNlri nlriInfo = listIterator.next();
@@ -347,24 +473,34 @@ public class BgpPeerImpl implements BgpPeer {
                     adjRib.remove(nlriInfo);
                     bgplocalRib.delete(nlriInfo);
                 } else {
-                    vpnAdjRib.removeVpn(nlriInfo, ((BgpNodeLSNlriVer4) nlriInfo).getRouteDistinguisher());
-                    bgplocalRibVpn.delete(nlriInfo, ((BgpNodeLSNlriVer4) nlriInfo).getRouteDistinguisher());
+                    vpnAdjRib.removeVpn(nlriInfo, ((BgpNodeLSNlriVer4) nlriInfo)
+                            .getRouteDistinguisher());
+                    bgplocalRibVpn.delete(nlriInfo,
+                                          ((BgpNodeLSNlriVer4) nlriInfo)
+                                                  .getRouteDistinguisher());
                 }
             } else if (nlriInfo instanceof BgpLinkLsNlriVer4) {
                 if (!((BgpLinkLsNlriVer4) nlriInfo).isVpnPresent()) {
                     adjRib.remove(nlriInfo);
                     bgplocalRib.delete(nlriInfo);
                 } else {
-                    vpnAdjRib.removeVpn(nlriInfo, ((BgpLinkLsNlriVer4) nlriInfo).getRouteDistinguisher());
-                    bgplocalRibVpn.delete(nlriInfo, ((BgpLinkLsNlriVer4) nlriInfo).getRouteDistinguisher());
+                    vpnAdjRib.removeVpn(nlriInfo, ((BgpLinkLsNlriVer4) nlriInfo)
+                            .getRouteDistinguisher());
+                    bgplocalRibVpn.delete(nlriInfo,
+                                          ((BgpLinkLsNlriVer4) nlriInfo)
+                                                  .getRouteDistinguisher());
                 }
             } else if (nlriInfo instanceof BgpPrefixIPv4LSNlriVer4) {
                 if (!((BgpPrefixIPv4LSNlriVer4) nlriInfo).isVpnPresent()) {
                     adjRib.remove(nlriInfo);
                     bgplocalRib.delete(nlriInfo);
                 } else {
-                    vpnAdjRib.removeVpn(nlriInfo, ((BgpPrefixIPv4LSNlriVer4) nlriInfo).getRouteDistinguisher());
-                    bgplocalRibVpn.delete(nlriInfo, ((BgpPrefixIPv4LSNlriVer4) nlriInfo).getRouteDistinguisher());
+                    vpnAdjRib.removeVpn(nlriInfo,
+                                        ((BgpPrefixIPv4LSNlriVer4) nlriInfo)
+                                                .getRouteDistinguisher());
+                    bgplocalRibVpn.delete(nlriInfo,
+                                          ((BgpPrefixIPv4LSNlriVer4) nlriInfo)
+                                                  .getRouteDistinguisher());
                 }
             }
         }
@@ -453,11 +589,13 @@ public class BgpPeerImpl implements BgpPeer {
         final SocketAddress address = channel.getRemoteAddress();
         if (address instanceof InetSocketAddress) {
             final InetSocketAddress inetAddress = (InetSocketAddress) address;
-            final IpAddress ipAddress = IpAddress.valueOf(inetAddress.getAddress());
+            final IpAddress ipAddress = IpAddress
+                    .valueOf(inetAddress.getAddress());
             if (ipAddress.isIp4()) {
                 channelId = ipAddress.toString() + ':' + inetAddress.getPort();
             } else {
-                channelId = '[' + ipAddress.toString() + "]:" + inetAddress.getPort();
+                channelId = '[' + ipAddress.toString() + "]:"
+                        + inetAddress.getPort();
             }
         }
     };
@@ -485,7 +623,8 @@ public class BgpPeerImpl implements BgpPeer {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(getClass()).omitNullValues()
-                                       .add("channel", channelId())
-                                       .add("BgpId", sessionInfo().remoteBgpId()).toString();
+                .add("channel", channelId())
+                .add("BgpId", sessionInfo().remoteBgpId()).toString();
     }
+
 }

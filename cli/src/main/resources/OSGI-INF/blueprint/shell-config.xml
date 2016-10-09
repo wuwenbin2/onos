@@ -516,6 +516,10 @@
         </command>
 
         <command>
+            <action class="org.onosproject.cli.net.RouteUpdateTestCommand"/>
+        </command>
+        
+        <command>
             <action class="org.onosproject.cli.net.RoutesListCommand"/>
         </command>
         <command>

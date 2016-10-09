@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 package org.onosproject.bgp.controller;
+
 import java.util.List;
 import org.jboss.netty.channel.Channel;
+import org.onlab.packet.Ip4Address;
+import org.onosproject.bgp.controller.BgpPeer.OperationType;
 import org.onosproject.bgpio.exceptions.BgpParseException;
+import org.onosproject.bgpio.protocol.BgpEvpnNlri;
 import org.onosproject.bgpio.protocol.BgpFactory;
 import org.onosproject.bgpio.protocol.BgpMessage;
 import org.onosproject.bgpio.protocol.flowspec.BgpFlowSpecNlri;
@@ -30,23 +34,24 @@ import org.onosproject.bgpio.types.attr.WideCommunity;
  */
 public interface BgpPeer {
 
-    enum FlowSpecOperation {
+    enum OperationType {
 
         /**
-         * Signifies addition of flow specification rule.
+         * Signifies addition of rule.
          */
         ADD,
 
         /**
-         *  Signifies updation of flow specification rule.
+         * Signifies updation of rule.
          */
         UPDATE,
 
         /**
-         * Signifies deletion of flow specification rule.
+         * Signifies deletion of rule.
          */
         DELETE
     }
+
     /**
      * Sets the associated Netty channel for this bgp peer.
      *
@@ -104,8 +109,8 @@ public interface BgpPeer {
     boolean isConnected();
 
     /**
-     * Disconnects the bgp peer by closing the TCP connection. Results in a call to the channel handler's
-     * channelDisconnected method for cleanup
+     * Disconnects the bgp peer by closing the TCP connection. Results in a call
+     * to the channel handler's channelDisconnected method for cleanup
      */
     void disconnectPeer();
 
@@ -135,10 +140,22 @@ public interface BgpPeer {
      * Updates flow specification rule.
      *
      * @param operType operation type add or delete or update
-     * @param routeKey flow route key  for the flow rule
+     * @param routeKey flow route key for the flow rule
      * @param flowSpec BGP flow specification components
      * @param wideCommunity for route policy
      */
-    void updateFlowSpec(FlowSpecOperation operType, BgpFlowSpecRouteKey routeKey,
-                               BgpFlowSpecNlri flowSpec, WideCommunity wideCommunity);
+    void updateFlowSpec(OperationType operType, BgpFlowSpecRouteKey routeKey,
+                        BgpFlowSpecNlri flowSpec, WideCommunity wideCommunity);
+
+    /**
+     * Updates evpn rule.
+     *
+     * @param operType operation type add or delete or update
+     * @param nextHop next Hop
+     * @param extCommunit extended community
+     * @param eVpnComponents list of evpnNlri
+     */
+    void updateEvpn(OperationType operType, Ip4Address nextHop,
+                    List<BgpValueType> extCommunit,
+                    List<BgpEvpnNlri> eVpnComponents);
 }

@@ -317,6 +317,8 @@ public class BgpOpenMsgVer4 implements BgpOpenMsg {
         private boolean isFlowSpecCapabilityTlvSet = false;
         private boolean isVpnFlowSpecCapabilityTlvSet = false;
         private boolean isFlowSpecRpdCapabilityTlvSet = false;
+        private boolean isVpnv4CapabilityTlvSet = false;
+        private boolean isEvpnCapabilityTlvSet = false;
 
         LinkedList<BgpValueType> capabilityTlv = new LinkedList<>();
 
@@ -364,6 +366,20 @@ public class BgpOpenMsgVer4 implements BgpOpenMsg {
                 BgpValueType tlv;
                 tlv = new MultiProtocolExtnCapabilityTlv(Constants.AFI_FLOWSPEC_VALUE,
                                                          RES, Constants.VPN_SAFI_FLOWSPEC_VALUE);
+                this.capabilityTlv.add(tlv);
+            }
+
+            if (this.isVpnv4CapabilityTlvSet) {
+                BgpValueType tlv;
+                tlv = new MultiProtocolExtnCapabilityTlv(Constants.AFI_VPNV4_VALUE,
+                                                         RES, Constants.SAFI_VPNV4_VALUE);
+                this.capabilityTlv.add(tlv);
+            }
+
+            if (this.isEvpnCapabilityTlvSet) {
+                BgpValueType tlv;
+                tlv = new MultiProtocolExtnCapabilityTlv(Constants.AFI_EVPN_VALUE,
+                                                         RES, Constants.SAFI_EVPN_VALUE);
                 this.capabilityTlv.add(tlv);
             }
 
@@ -438,6 +454,18 @@ public class BgpOpenMsgVer4 implements BgpOpenMsg {
         @Override
         public Builder setFlowSpecRpdCapabilityTlv(boolean isFlowSpecRpdCapabilityTlvSet) {
             this.isFlowSpecRpdCapabilityTlvSet = isFlowSpecRpdCapabilityTlvSet;
+            return this;
+        }
+
+        @Override
+        public Builder setVpnv4CapabilityTlv(boolean isVpnv4CapabilitySet) {
+            this.isVpnv4CapabilityTlvSet = isVpnv4CapabilitySet;
+            return this;
+        }
+
+        @Override
+        public Builder setEvpnCapabilityTlv(boolean isEvpnCapabilitySet) {
+            this.isEvpnCapabilityTlvSet = isEvpnCapabilitySet;
             return this;
         }
     }

@@ -23,6 +23,7 @@ import org.onosproject.bgp.controller.BgpLocalRib;
 import org.onosproject.bgp.controller.BgpNodeListener;
 import org.onosproject.bgp.controller.BgpPeer;
 import org.onosproject.bgp.controller.BgpPeerManager;
+import org.onosproject.bgp.controller.BgpRouteListener;
 import org.onosproject.bgpio.exceptions.BgpParseException;
 import org.onosproject.bgpio.protocol.BgpMessage;
 
@@ -126,5 +127,21 @@ public class BgpControllerAdapter implements BgpController {
     @Override
     public void removeLinkListener(BgpLinkListener listener) {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void addRouteListener(BgpRouteListener listener) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void removeRouteListener(BgpRouteListener listener) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public Set<BgpRouteListener> routeListener() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

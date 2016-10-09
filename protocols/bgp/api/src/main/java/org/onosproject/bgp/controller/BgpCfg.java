@@ -333,6 +333,34 @@ public interface BgpCfg {
     void setFlowSpecCapability(FlowSpec flowSpec);
 
     /**
+     * Gets the vpnv4 capability.
+     *
+     * @return vpnv4 capability
+     */
+    boolean vpnv4Capability();
+
+    /**
+     * Sets the vpnv4 capability.
+     *
+     * @param vpnv4 capability
+     */
+    void setVpnv4Capability(boolean vpnCapability);
+
+    /**
+     * Gets the evpn capability.
+     *
+     * @return evpn capability
+     */
+    boolean evpnCapability();
+
+    /**
+     * Sets the evpn capability.
+     *
+     * @param evpn capability
+     */
+    void setEvpnCapability(boolean evpnCapability);
+
+    /**
      * Returns the flow specification route policy distribution capability.
      *
      * @return RDP flow specification capability

@@ -58,6 +58,8 @@ public class BgpConfig implements BgpCfg {
     private BgpPeerManagerImpl peerManager;
     private BgpController bgpController;
     private boolean rpdCapability;
+    private boolean vpnv4Capability;
+    private boolean evpnCapability;
 
     /*
      * Constructor to initialize the values.
@@ -127,6 +129,26 @@ public class BgpConfig implements BgpCfg {
     @Override
     public void setFlowSpecCapability(FlowSpec flowSpec) {
         this.flowSpec = flowSpec;
+    }
+
+    @Override
+    public boolean vpnv4Capability() {
+        return this.vpnv4Capability;
+    }
+
+    @Override
+    public void setVpnv4Capability(boolean vpnCapability) {
+        this.vpnv4Capability = vpnCapability;
+    }
+
+    @Override
+    public boolean evpnCapability() {
+        return this.evpnCapability;
+    }
+
+    @Override
+    public void setEvpnCapability(boolean evpnCapability) {
+        this.evpnCapability = evpnCapability;
     }
 
     @Override
@@ -382,4 +404,6 @@ public class BgpConfig implements BgpCfg {
     public void setMaxConnRetryTime(int retryTime) {
         this.maxConnRetryTime = retryTime;
     }
+
+
 }

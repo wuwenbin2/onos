@@ -127,10 +127,10 @@ public class BgpCfgProvider extends AbstractProvider {
         bgpConfig.setHoldTime(config.holdTime());
         bgpConfig.setMaxSession(config.maxSession());
         bgpConfig.setLargeASCapability(config.largeAsCapability());
+        bgpConfig.setVpnv4Capability(config.vpnv4Capability());
+        bgpConfig.setEvpnCapability(config.evpnCapability());
 
-        if (config.flowSpecCapability() == null) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
-        } else {
+        if (config.flowSpecCapability() != null) {
             if (config.flowSpecCapability().equals("IPV4")) {
                 bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4);
             } else if (config.flowSpecCapability().equals("VPNV4")) {
@@ -140,6 +140,8 @@ public class BgpCfgProvider extends AbstractProvider {
             } else {
                 bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
             }
+        } else {
+            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
         }
         bgpConfig.setFlowSpecRpdCapability(config.rpdCapability());
 
@@ -181,10 +183,10 @@ public class BgpCfgProvider extends AbstractProvider {
         bgpConfig.setHoldTime(config.holdTime());
         bgpConfig.setMaxSession(config.maxSession());
         bgpConfig.setLargeASCapability(config.largeAsCapability());
+        bgpConfig.setVpnv4Capability(config.vpnv4Capability());
+        bgpConfig.setEvpnCapability(config.evpnCapability());
 
-        if (config.flowSpecCapability() == null) {
-            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
-        } else {
+        if (config.flowSpecCapability() != null) {
             if (config.flowSpecCapability().equals("IPV4")) {
                 bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.IPV4);
             } else if (config.flowSpecCapability().equals("VPNV4")) {
@@ -194,6 +196,8 @@ public class BgpCfgProvider extends AbstractProvider {
             } else {
                 bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
             }
+        } else {
+            bgpConfig.setFlowSpecCapability(BgpCfg.FlowSpec.NONE);
         }
         bgpConfig.setFlowSpecRpdCapability(config.rpdCapability());
 
