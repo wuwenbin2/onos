@@ -40,6 +40,7 @@ import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.AbstractStore;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -90,6 +91,18 @@ public class LocalEvpnPrivateRouteStore
             return Collections.emptySet();
         }
         return routeTables.get(evpnName).getRoutes();
+    }
+
+    @Override
+    public Collection<EvpnInstanceRoute> getEvpnRoutes() {
+        if (routeTables == null) {
+            return Collections.emptySet();
+        }
+        Collection<EvpnInstanceRoute> list = Lists.newLinkedList();
+        routeTables.keySet().forEach(evpnName -> {
+            list.addAll(routeTables.get(evpnName).getRoutes());
+        });
+        return list;
     }
 
     /**

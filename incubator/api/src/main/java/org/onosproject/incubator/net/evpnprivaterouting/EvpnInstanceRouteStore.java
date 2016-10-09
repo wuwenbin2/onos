@@ -41,5 +41,5 @@ public interface EvpnInstanceRouteStore
     void removeEvpnRoute(EvpnInstanceRoute route);
 
     Collection<EvpnInstanceRoute> getEvpnRoutes(EvpnInstanceName evpnName);
-
+    Collection<EvpnInstanceRoute> getEvpnRoutes();
 }
