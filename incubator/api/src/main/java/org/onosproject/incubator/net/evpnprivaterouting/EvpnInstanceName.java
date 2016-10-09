@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Represents Route Distinguisher of device in the network.
  */
-public final class EvpnName {
+public final class EvpnInstanceName {
     private final String evpnName;
 
     /**
@@ -34,12 +34,12 @@ public final class EvpnName {
      *
      * @param routeDistinguisher route distinguisher
      */
-    private EvpnName(String evpnName) {
+    private EvpnInstanceName(String evpnName) {
         this.evpnName = evpnName;
     }
 
-    public static EvpnName evpnName(String evpnName) {
-        return new EvpnName(evpnName);
+    public static EvpnInstanceName evpnName(String evpnName) {
+        return new EvpnInstanceName(evpnName);
     }
 
     @Override
@@ -53,8 +53,8 @@ public final class EvpnName {
             return true;
         }
 
-        if (obj instanceof EvpnName) {
-            EvpnName other = (EvpnName) obj;
+        if (obj instanceof EvpnInstanceName) {
+            EvpnInstanceName other = (EvpnInstanceName) obj;
             return Objects.equals(evpnName, other.evpnName);
         }
         return false;

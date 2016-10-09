@@ -18,6 +18,7 @@ package org.onosproject.incubator.store.evpnprivaterouting.impl;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,15 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Service;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateNextHop;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivatePrefix;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRoute;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteEvent;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteStore;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteStoreDelegate;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteEvent;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStore;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStoreDelegate;
+import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
+import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.AbstractStore;
 
 import com.google.common.collect.HashMultimap;
@@ -46,10 +50,10 @@ import com.google.common.collect.Multimaps;
 @Component
 public class LocalEvpnPrivateRouteStore
         extends
-        AbstractStore<EvpnPrivateRouteEvent, EvpnPrivateRouteStoreDelegate>
-        implements EvpnPrivateRouteStore {
+        AbstractStore<EvpnInstanceRouteEvent, EvpnInstanceRouteStoreDelegate>
+        implements EvpnInstanceRouteStore {
 
-    private EvpnPrivateRouteTable routeTable = new EvpnPrivateRouteTable();
+    private Map<EvpnInstanceName, EvpnInstanceRouteTable> routeTables = new HashMap<>();;
 
     @Activate
     public void activate() {
@@ -60,59 +64,76 @@ public class LocalEvpnPrivateRouteStore
     }
 
     @Override
-    public void updateEvpnRoute(EvpnPrivateRoute route) {
-        routeTable.update(route);
+    public void updateEvpnRoute(EvpnInstanceRoute route) {
+        if (routeTables.get(route.evpnInstanceName()) == null) {
+            EvpnInstanceRouteTable evpnInstanceRouteTable = new EvpnInstanceRouteTable(
+                                                                                       route.evpnInstanceName(),
+                                                                                       route.RouteDistinguisher(),
+                                                                                       route.routeTarget());
+            routeTables.put(route.evpnInstanceName(), evpnInstanceRouteTable);
+        }
+        routeTables.get(route.evpnInstanceName()).update(route);
+
     }
 
     @Override
-    public void removeEvpnRoute(EvpnPrivateRoute route) {
-        routeTable.remove(route);
+    public void removeEvpnRoute(EvpnInstanceRoute route) {
+        if (routeTables.get(route.evpnInstanceName()) == null) {
+            return;
+        }
+        routeTables.get(route.evpnInstanceName()).remove(route);
     }
 
     @Override
-    public Collection<EvpnPrivateRoute> getEvpnRoutes() {
-        if (routeTable == null) {
+    public Collection<EvpnInstanceRoute> getEvpnRoutes(EvpnInstanceName evpnName) {
+        if (routeTables == null) {
             return Collections.emptySet();
         }
-        return routeTable.getRoutes();
+        return routeTables.get(evpnName).getRoutes();
     }
 
     /**
      * Route table into which routes can be placed.
      */
-    private class EvpnPrivateRouteTable {
+    private class EvpnInstanceRouteTable {
 
-        private final Map<EvpnPrivatePrefix, EvpnPrivateRoute> routesMap = new ConcurrentHashMap<>();
-        private final Multimap<EvpnPrivateNextHop, EvpnPrivateRoute> reverseIndex = Multimaps
-                .synchronizedMultimap(HashMultimap.create());
+        private final EvpnInstanceName evpnName;
+        private final RouteDistinguisher rd;
+        private final RouteTarget rt;
+        private final Map<EvpnInstancePrefix, EvpnInstanceNextHop> routesMap = new ConcurrentHashMap<>();
+
+        // private final Multimap<EvpnInstanceNextHop, EvpnInstanceRoute>
+        // reverseIndex = Multimaps
+        // .synchronizedMultimap(HashMultimap.create());
+
+        public EvpnInstanceRouteTable(EvpnInstanceName evpnName,
+                                      RouteDistinguisher rd, RouteTarget rt) {
+            this.evpnName = evpnName;
+            this.rd = rd;
+            this.rt = rt;
+        }
 
         /**
          * Adds or updates the route in the route table.
          *
          * @param route route to update
          */
-        public void update(EvpnPrivateRoute route) {
+        public void update(EvpnInstanceRoute route) {
             synchronized (this) {
-                EvpnPrivateRoute oldRoute = routesMap.put(route.prefix(),
-                                                          route);
-                reverseIndex.put(route.nextHop(), route);
+                if (route.evpnInstanceName().equals(evpnName)) {
+                    EvpnInstanceNextHop oldNextHop = routesMap.put(route
+                            .prefix(), route.nextHop());
 
-                if (oldRoute != null) {
-                    reverseIndex.remove(oldRoute.nextHop(), oldRoute);
+                    notifyDelegate(new EvpnInstanceRouteEvent(
+                                                              EvpnInstanceRouteEvent.Type.ROUTE_ADDED,
+                                                              route));
                 }
+                // reverseIndex.put(route.nextHop(), route);
 
-                if (route.equals(oldRoute)) {
-                    // No need to send events if the new route is the same
-                    return;
-                }
+                // if (oldRoute != null) {
+                // reverseIndex.remove(oldRoute.nextHop(), oldRoute);
+                // }
 
-                if (oldRoute != null) {
-                    notifyDelegate(new EvpnPrivateRouteEvent(EvpnPrivateRouteEvent.Type.ROUTE_REMOVED,
-                                                             oldRoute));
-                }
-                notifyDelegate(new EvpnPrivateRouteEvent(EvpnPrivateRouteEvent.Type.ROUTE_ADDED,
-                                                         route));
-                return;
             }
         }
 
@@ -121,24 +142,27 @@ public class LocalEvpnPrivateRouteStore
          *
          * @param route route to remove
          */
-        public void remove(EvpnPrivateRoute route) {
+        public void remove(EvpnInstanceRoute route) {
             synchronized (this) {
-                EvpnPrivateRoute removedRoute = routesMap
-                        .remove(route.prefix());
-
-                if (removedRoute != null) {
-                    reverseIndex.remove(removedRoute.nextHop(), removedRoute);
-                    notifyDelegate(new EvpnPrivateRouteEvent(EvpnPrivateRouteEvent.Type.ROUTE_REMOVED,
-                                                             removedRoute));
+                if (route.evpnInstanceName().equals(evpnName)) {
+                    routesMap.remove(route.prefix());
+                    // reverseIndex.remove(removedRoute.nextHop(),
+                    // removedRoute);
+                    notifyDelegate(new EvpnInstanceRouteEvent(
+                                                              EvpnInstanceRouteEvent.Type.ROUTE_REMOVED,
+                                                              route));
                 }
             }
         }
 
-        public Collection<EvpnPrivateRoute> getRoutes() {
-            List<EvpnPrivateRoute> routes = new LinkedList<>();
-            for (Map.Entry<EvpnPrivatePrefix, EvpnPrivateRoute> e : routesMap
+        public Collection<EvpnInstanceRoute> getRoutes() {
+            List<EvpnInstanceRoute> routes = new LinkedList<>();
+            for (Map.Entry<EvpnInstancePrefix, EvpnInstanceNextHop> e : routesMap
                     .entrySet()) {
-                routes.add(e.getValue());
+                EvpnInstanceRoute route = new EvpnInstanceRoute(evpnName, rd,
+                                                                rt, e.getKey(),
+                                                                e.getValue());
+                routes.add(route);
             }
             return routes;
         }

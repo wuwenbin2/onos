@@ -16,7 +16,7 @@
 
 package org.onosproject.incubator.net.evpnprivaterouting.impl;
 
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteEvent;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteEvent;
 
 /**
  * Queues updates for a route listener to ensure they are received in the
@@ -29,7 +29,7 @@ interface ListenerQueue {
      *
      * @param event event
      */
-    void post(EvpnPrivateRouteEvent event);
+    void post(EvpnInstanceRouteEvent event);
 
     /**
      * Initiates event delivery to the listener.

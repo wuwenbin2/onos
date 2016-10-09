@@ -16,25 +16,11 @@
 
 package org.onosproject.incubator.net.evpnprivaterouting;
 
-import java.util.Collection;
+import org.onosproject.store.StoreDelegate;
 
 /**
- * Service allowing mutation of unicast routing state.
+ * Route store delegate abstraction.
  */
-public interface EvpnPrivateRouteAdminService extends EvpnPrivateRouteService {
-
-    /**
-     * Updates the given routes in the route service.
-     *
-     * @param routes collection of routes to update
-     */
-    void updateEvpnRoute(Collection<EvpnPrivateRoute> routes);
-
-    /**
-     * Withdraws the given routes from the route service.
-     *
-     * @param routes collection of routes to withdraw
-     */
-    void withdrawEvpnRoute(Collection<EvpnPrivateRoute> routes);
-
+public interface EvpnInstanceRouteStoreDelegate
+        extends StoreDelegate<EvpnInstanceRouteEvent> {
 }

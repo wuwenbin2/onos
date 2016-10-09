@@ -21,18 +21,29 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Objects;
 
+import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
+import org.onosproject.incubator.net.evpnrouting.RouteTarget;
+
 /**
  * Represents a route.
  */
-public class EvpnPrivateRoute {
+public class EvpnInstanceRoute {
 
-    private final EvpnPrivatePrefix prefix;
-    private final EvpnPrivateNextHop nextHop;
+    private final EvpnInstanceName evpnName;
+    private final RouteDistinguisher rd;
+    private final RouteTarget rt;
+    private final EvpnInstancePrefix prefix;
+    private final EvpnInstanceNextHop nextHop;
 
     // new add
-    public EvpnPrivateRoute(EvpnPrivatePrefix prefix, EvpnPrivateNextHop nextHop) {
+    public EvpnInstanceRoute(EvpnInstanceName evpnName, RouteDistinguisher rd,
+                             RouteTarget rt, EvpnInstancePrefix prefix,
+                             EvpnInstanceNextHop nextHop) {
         checkNotNull(prefix);
         checkNotNull(nextHop);
+        this.evpnName = evpnName;
+        this.rd = rd;
+        this.rt = rt;
         this.prefix = prefix;
         this.nextHop = nextHop;
     }
@@ -42,7 +53,34 @@ public class EvpnPrivateRoute {
      *
      * @return IP prefix
      */
-    public EvpnPrivatePrefix prefix() {
+    public EvpnInstanceName evpnInstanceName() {
+        return evpnName;
+    }
+
+    /**
+     * Returns the IP prefix of the route.
+     *
+     * @return IP prefix
+     */
+    public RouteDistinguisher RouteDistinguisher() {
+        return rd;
+    }
+
+    /**
+     * Returns the IP prefix of the route.
+     *
+     * @return IP prefix
+     */
+    public RouteTarget routeTarget() {
+        return rt;
+    }
+
+    /**
+     * Returns the IP prefix of the route.
+     *
+     * @return IP prefix
+     */
+    public EvpnInstancePrefix prefix() {
         return prefix;
     }
 
@@ -51,7 +89,7 @@ public class EvpnPrivateRoute {
      *
      * @return next hop
      */
-    public EvpnPrivateNextHop nextHop() {
+    public EvpnInstanceNextHop nextHop() {
         return nextHop;
     }
 
@@ -66,11 +104,11 @@ public class EvpnPrivateRoute {
             return true;
         }
 
-        if (!(other instanceof EvpnPrivateRoute)) {
+        if (!(other instanceof EvpnInstanceRoute)) {
             return false;
         }
 
-        EvpnPrivateRoute that = (EvpnPrivateRoute) other;
+        EvpnInstanceRoute that = (EvpnInstanceRoute) other;
 
         return Objects.equals(prefix, prefix)
                 && Objects.equals(nextHop, that.nextHop);

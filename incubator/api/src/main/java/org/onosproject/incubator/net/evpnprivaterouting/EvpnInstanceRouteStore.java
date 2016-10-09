@@ -16,10 +16,30 @@
 
 package org.onosproject.incubator.net.evpnprivaterouting;
 
-import org.onosproject.event.EventListener;
+import java.util.Collection;
+
+import org.onosproject.store.Store;
 
 /**
- * Listener for route events.
+ * Unicast route store.
  */
-public interface EvpnPrivateRouteListener extends EventListener<EvpnPrivateRouteEvent> {
+public interface EvpnInstanceRouteStore
+        extends Store<EvpnInstanceRouteEvent, EvpnInstanceRouteStoreDelegate> {
+
+    /**
+     * Adds or updates the given route in the store.
+     *
+     * @param route route to add or update
+     */
+    void updateEvpnRoute(EvpnInstanceRoute route);
+
+    /**
+     * Removes the given route from the store.
+     *
+     * @param route route to remove
+     */
+    void removeEvpnRoute(EvpnInstanceRoute route);
+
+    Collection<EvpnInstanceRoute> getEvpnRoutes(EvpnInstanceName evpnName);
+
 }
