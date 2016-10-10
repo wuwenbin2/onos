@@ -39,10 +39,7 @@ import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.AbstractStore;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 
 /**
  * Route store based on in-memory storage.
@@ -67,10 +64,9 @@ public class LocalEvpnPrivateRouteStore
     @Override
     public void updateEvpnRoute(EvpnInstanceRoute route) {
         if (routeTables.get(route.evpnInstanceName()) == null) {
-            EvpnInstanceRouteTable evpnInstanceRouteTable = new EvpnInstanceRouteTable(
-                                                                                       route.evpnInstanceName(),
-                                                                                       route.RouteDistinguisher(),
-                                                                                       route.routeTarget());
+            EvpnInstanceRouteTable evpnInstanceRouteTable = new EvpnInstanceRouteTable(route
+                    .evpnInstanceName(), route
+                            .RouteDistinguisher(), route.routeTarget());
             routeTables.put(route.evpnInstanceName(), evpnInstanceRouteTable);
         }
         routeTables.get(route.evpnInstanceName()).update(route);
@@ -105,6 +101,14 @@ public class LocalEvpnPrivateRouteStore
         return list;
     }
 
+    @Override
+    public RouteTarget getRtByInstanceName(EvpnInstanceName name) {
+        if (routeTables == null) {
+            return null;
+        }
+        return routeTables.get(name).rt;
+    }
+
     /**
      * Route table into which routes can be placed.
      */
@@ -134,11 +138,10 @@ public class LocalEvpnPrivateRouteStore
         public void update(EvpnInstanceRoute route) {
             synchronized (this) {
                 if (route.evpnInstanceName().equals(evpnName)) {
-                    EvpnInstanceNextHop oldNextHop = routesMap.put(route
-                            .prefix(), route.nextHop());
+                    EvpnInstanceNextHop oldNextHop = routesMap
+                            .put(route.prefix(), route.nextHop());
 
-                    notifyDelegate(new EvpnInstanceRouteEvent(
-                                                              EvpnInstanceRouteEvent.Type.ROUTE_ADDED,
+                    notifyDelegate(new EvpnInstanceRouteEvent(EvpnInstanceRouteEvent.Type.ROUTE_ADDED,
                                                               route));
                 }
                 // reverseIndex.put(route.nextHop(), route);
@@ -161,8 +164,7 @@ public class LocalEvpnPrivateRouteStore
                     routesMap.remove(route.prefix());
                     // reverseIndex.remove(removedRoute.nextHop(),
                     // removedRoute);
-                    notifyDelegate(new EvpnInstanceRouteEvent(
-                                                              EvpnInstanceRouteEvent.Type.ROUTE_REMOVED,
+                    notifyDelegate(new EvpnInstanceRouteEvent(EvpnInstanceRouteEvent.Type.ROUTE_REMOVED,
                                                               route));
                 }
             }

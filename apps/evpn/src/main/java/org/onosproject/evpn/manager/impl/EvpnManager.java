@@ -19,8 +19,6 @@ import static org.onosproject.net.flow.instructions.ExtensionTreatmentType.Exten
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -33,19 +31,23 @@ import org.onlab.packet.MplsLabel;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.evpn.manager.EvpnService;
-import org.onosproject.evpn.rsc.EvpnInstance;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnMessage;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnName;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateNextHop;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivatePrefix;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRoute;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteAdminService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteService;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstance;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteAdminService;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteService;
 import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteEvent;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteListener;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteService;
+import org.onosproject.incubator.net.evpnrouting.RouteTarget;
+import org.onosproject.incubator.net.resource.label.LabelResource;
+import org.onosproject.incubator.net.resource.label.LabelResourceAdminService;
+import org.onosproject.incubator.net.resource.label.LabelResourceId;
+import org.onosproject.incubator.net.resource.label.LabelResourceService;
 import org.onosproject.mastership.MastershipService;
+import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.Host;
 import org.onosproject.net.Port;
@@ -89,10 +91,10 @@ public class EvpnManager implements EvpnService {
     protected DeviceService deviceService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnPrivateRouteService privateRouteService;
+    protected EvpnInstanceRouteService privateRouteService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnPrivateRouteAdminService privateRouteAdminService;
+    protected EvpnInstanceRouteAdminService privateRouteAdminService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
@@ -102,10 +104,16 @@ public class EvpnManager implements EvpnService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected FlowObjectiveService flowObjectiveService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected LabelResourceAdminService labelAdminService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected LabelResourceService labelService;
+
     private final HostListener hostListener = new InnerHostListener();
     private final EvpnRouteListener routeListener = new InnerRouteListener();
 
-    private Map<String, EvpnInstance> evpnStore;
     private ApplicationId appId;
 
     @Activate
@@ -113,7 +121,9 @@ public class EvpnManager implements EvpnService {
         appId = coreService.registerApplication(APP_ID);
         hostService.addListener(hostListener);
         routeService.addListener(routeListener);
-        evpnStore = new HashMap<String, EvpnInstance>();
+        labelAdminService
+                .createGlobalPool(LabelResourceId.labelResourceId(1),
+                                  LabelResourceId.labelResourceId(1000));
         log.info("Started");
     }
 
@@ -126,53 +136,83 @@ public class EvpnManager implements EvpnService {
 
     @Override
     public void onBgpEvpnRouteUpdate(EvpnRoute route) {
-        // deal when private route add
-        EvpnPrivateRoute evpnPrivateRoute = new EvpnPrivateRoute(EvpnPrivatePrefix
-                .evpnPrefix(EvpnMessage.evpnMessage(route.routeDistinguisher(),
-                                                    route.routeTarget(),
-                                                    EvpnName.evpnName("vpn1")),
-                            route.prefix()), EvpnPrivateNextHop
-                                    .evpnNextHop(route.nextHop(),
-                                                 route.label()));
-        privateRouteAdminService
-                .updateEvpnRoute(Sets.newHashSet(evpnPrivateRoute));
-       // download flows
-        deviceService.getAvailableDevices().forEach(device -> {
-            DeviceId deviceId = device.id();
-            DriverHandler handler = driverService.createHandler(deviceId);
-            ExtensionTreatmentResolver resolver = handler
-                    .behaviour(ExtensionTreatmentResolver.class);
-            ExtensionTreatment treatment = resolver
-                    .getExtensionInstruction(NICIRA_SET_TUNNEL_DST.type());
-            try {
-                treatment.setPropertyValue("tunnelDst", "10.0.0.2");
-            } catch (Exception e) {
-                log.error("Failed to get extension instruction to set tunnel dst {}",
-                          deviceId);
-            }
-            Builder builder = DefaultTrafficTreatment.builder();
-            builder.extension(treatment, deviceId);
-            TrafficSelector selector = DefaultTrafficSelector.builder()
-                    .matchEthType(EtherType.IPV4.ethType().toShort())
-                    .matchEthDst(route.prefix()).build();
-            Iterable<Port> ports = deviceService.getPorts(deviceId);
-            Collection<PortNumber> localTunnelPorts = VtnData.getLocalTunnelPorts(ports);
-            TrafficTreatment build = builder
-                    .pushMpls()
-                    .setMpls(MplsLabel.mplsLabel(route.label().getLabel()))
-                    .setOutput(localTunnelPorts.iterator().next()).build();
+        if (EvpnRoute.Source.LOCAL.equals(route.source())) {
+            return;
+        }
+        // deal when private route add getEvpnInstances()
+        privateRouteService.getEvpnInstanceNames().forEach(evpnName -> {
+            RouteTarget rt = privateRouteService.getRtByInstanceName(evpnName);
+            if (route.routeTarget().equals(rt)) {
+                EvpnInstanceRoute evpnPrivateRoute = new EvpnInstanceRoute(evpnName,
+                                                                           route.routeDistinguisher(),
+                                                                           route.routeTarget(),
+                                                                           EvpnInstancePrefix
+                                                                                   .evpnPrefix(EvpnInstance
+                                                                                           .evpnMessage(route
+                                                                                                   .routeDistinguisher(),
+                                                                                                        route.routeTarget(),
+                                                                                                        evpnName),
+                                                                                               route.prefix()),
+                                                                           EvpnInstanceNextHop
+                                                                                   .evpnNextHop(route
+                                                                                           .nextHop(),
+                                                                                                route.label()));
+                privateRouteAdminService
+                        .updateEvpnRoute(Sets.newHashSet(evpnPrivateRoute));
 
-            ForwardingObjective.Builder objective = DefaultForwardingObjective
-                    .builder().withTreatment(build).withSelector(selector)
-                    .fromApp(appId).withFlag(ForwardingObjective.Flag.SPECIFIC)
-                    .withPriority(6000);
-            flowObjectiveService.forward(device.id(), objective.add());
+            }
         });
+        deviceService.getAvailableDevices(Device.Type.SWITCH)
+                .forEach(device -> {
+                    ForwardingObjective.Builder objective = getMplsBuilder(device,
+                                                                           route);
+                    flowObjectiveService.forward(device.id(), objective.add());
+                });
     }
 
     @Override
     public void onBgpEvpnRouteDelete(EvpnRoute route) {
-        // TODO Auto-generated method stub
+        deviceService.getAvailableDevices(Device.Type.SWITCH)
+                .forEach(device -> {
+                    ForwardingObjective.Builder objective = getMplsBuilder(device,
+                                                                           route);
+                    flowObjectiveService.forward(device.id(),
+                                                 objective.remove());
+                });
+    }
+
+    private ForwardingObjective.Builder getMplsBuilder(Device device,
+                                                       EvpnRoute route) {
+        DeviceId deviceId = device.id();
+        DriverHandler handler = driverService.createHandler(deviceId);
+        ExtensionTreatmentResolver resolver = handler
+                .behaviour(ExtensionTreatmentResolver.class);
+        ExtensionTreatment treatment = resolver
+                .getExtensionInstruction(NICIRA_SET_TUNNEL_DST.type());
+        try {
+            treatment.setPropertyValue("tunnelDst", route.nextHop());
+        } catch (Exception e) {
+            log.error("Failed to get extension instruction to set tunnel dst {}",
+                      deviceId);
+        }
+        Builder builder = DefaultTrafficTreatment.builder();
+        builder.extension(treatment, deviceId);
+        TrafficSelector selector = DefaultTrafficSelector.builder()
+                .matchEthType(EtherType.IPV4.ethType().toShort())
+                .matchEthDst(route.prefix()).build();
+        Iterable<Port> ports = deviceService.getPorts(deviceId);
+        Collection<PortNumber> localTunnelPorts = VtnData
+                .getLocalTunnelPorts(ports);
+        TrafficTreatment build = builder.pushMpls()
+                .setMpls(MplsLabel.mplsLabel(route.label().getLabel()))
+                .setOutput(localTunnelPorts.iterator().next()).build();
+
+        ForwardingObjective.Builder objective = DefaultForwardingObjective
+                .builder().withTreatment(build).withSelector(selector)
+                .fromApp(appId).withFlag(ForwardingObjective.Flag.SPECIFIC)
+                .withPriority(60000);
+        return objective;
+
     }
 
     @Override
@@ -188,10 +228,14 @@ public class EvpnManager implements EvpnService {
         }
         VirtualPortId virtualPortId = VirtualPortId.portId(ifaceId);
         // Get info from Gluon Shim
-        EvpnInstance evpnInstance = new EvpnInstance("TestVPN", "123", null,
-                                                     null, null, null);
-        evpnStore.put("123", evpnInstance);
+
         // create private route and get label ,change to public route
+        Collection<LabelResource> privatelabel = labelService
+                .applyFromGlobalPool(1);
+        EvpnInstanceRoute evpnInstanceRoute = new EvpnInstanceRoute(null, null,
+                                                                    null, null,
+                                                                    null);
+        // download flows
     }
 
     @Override

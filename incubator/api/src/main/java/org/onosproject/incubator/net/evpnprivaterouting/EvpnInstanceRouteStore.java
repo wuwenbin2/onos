@@ -18,6 +18,7 @@ package org.onosproject.incubator.net.evpnprivaterouting;
 
 import java.util.Collection;
 
+import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.Store;
 
 /**
@@ -41,5 +42,8 @@ public interface EvpnInstanceRouteStore
     void removeEvpnRoute(EvpnInstanceRoute route);
 
     Collection<EvpnInstanceRoute> getEvpnRoutes(EvpnInstanceName evpnName);
+
     Collection<EvpnInstanceRoute> getEvpnRoutes();
+
+    RouteTarget getRtByInstanceName(EvpnInstanceName name);
 }
