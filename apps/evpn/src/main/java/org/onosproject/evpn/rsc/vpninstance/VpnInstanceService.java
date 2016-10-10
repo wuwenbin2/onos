@@ -39,13 +39,13 @@ public interface VpnInstanceService {
      * @param vpnInstanceId vpnInstance ID
      * @return VpnInstance or null if one with the given ID is not know.
      */
-    VpnInstance getPort(VpnInstanceId vpnInstanceId);
+    VpnInstance getInstance(VpnInstanceId vpnInstanceId);
 
     /**
      * Returns the collection of the currently known vpnInstance.
      * @return collection of VpnInstance.
      */
-    Collection<VpnInstance> getPorts();
+    Collection<VpnInstance> getInstances();
 
     /**
      * Creates vpnInstances by vpnInstances.
@@ -53,7 +53,7 @@ public interface VpnInstanceService {
      * @param vpnInstances the iterable collection of vpnInstances
      * @return true if all given identifiers created successfully.
      */
-    boolean createPorts(Iterable<VpnInstance> vpnInstances);
+    boolean createInstances(Iterable<VpnInstance> vpnInstances);
 
     /**
      * Updates vpnInstances by vpnInstances.
@@ -61,7 +61,7 @@ public interface VpnInstanceService {
      * @param vpnInstances the iterable  collection of vpnInstances
      * @return true if all given identifiers updated successfully.
      */
-    boolean updatePorts(Iterable<VpnInstance> vpnInstances);
+    boolean updateInstances(Iterable<VpnInstance> vpnInstances);
 
     /**
      * Deletes vpnInstanceIds by vpnInstanceIds.
@@ -70,5 +70,5 @@ public interface VpnInstanceService {
      * @return true or false if one with the given identifier to delete is
      *         successfully.
      */
-    boolean removePorts(Iterable<VpnInstanceId> vpnInstanceIds);
+    boolean removeInstances(Iterable<VpnInstanceId> vpnInstanceIds);
 }
