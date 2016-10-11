@@ -14,30 +14,35 @@
  * limitations under the License.
  */
 
-package org.onosproject.incubator.net.evpnprivaterouting.impl;
+package org.onosproject.evpn.rsc;
 
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteEvent;
+import org.onlab.util.Identifier;
 
 /**
- * Queues updates for a route listener to ensure they are received in the
- * correct order.
+ * Immutable representation of a VPN port identity.
  */
-interface ListenerQueue {
+public final class VpnPortId extends Identifier<String> {
+
+    private VpnPortId(String vpnPortId) {
+        super(vpnPortId);
+    }
 
     /**
-     * Posts an event to the listener.
+     * Creates a VPN port identifier.
      *
-     * @param event event
+     * @param vpnPortId VPN port identify string
+     * @return VPN port identifier
      */
-    void post(EvpnInstanceRouteEvent event);
+    public static VpnPortId vpnPortId(String vpnPortId) {
+        return new VpnPortId(vpnPortId);
+    }
 
     /**
-     * Initiates event delivery to the listener.
+     * Returns VPN port identifier.
+     *
+     * @return the VPN port identifier
      */
-    void start();
-
-    /**
-     * Halts event delivery to the listener.
-     */
-    void stop();
+    public String vpnPortId() {
+        return identifier;
+    }
 }

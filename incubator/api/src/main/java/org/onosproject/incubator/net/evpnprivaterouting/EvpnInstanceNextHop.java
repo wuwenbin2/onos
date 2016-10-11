@@ -26,20 +26,19 @@ import org.onosproject.incubator.net.evpnrouting.Label;
 /**
  * Represents a route.
  */
-public final class EvpnPrivateNextHop {
+public final class EvpnInstanceNextHop {
 
     private final IpAddress nextHop;
     private final Label label;
 
     // new add
-    private EvpnPrivateNextHop(IpAddress nextHop, Label label) {
+    private EvpnInstanceNextHop(IpAddress nextHop, Label label) {
         this.nextHop = nextHop;
         this.label = label;
     }
 
-    public static EvpnPrivateNextHop evpnNextHop(IpAddress nextHop,
-                                          Label label) {
-        return new EvpnPrivateNextHop(nextHop, label);
+    public static EvpnInstanceNextHop evpnNextHop(IpAddress nextHop, Label label) {
+        return new EvpnInstanceNextHop(nextHop, label);
     }
 
     /**
@@ -66,11 +65,11 @@ public final class EvpnPrivateNextHop {
             return true;
         }
 
-        if (!(other instanceof EvpnPrivateNextHop)) {
+        if (!(other instanceof EvpnInstanceNextHop)) {
             return false;
         }
 
-        EvpnPrivateNextHop that = (EvpnPrivateNextHop) other;
+        EvpnInstanceNextHop that = (EvpnInstanceNextHop) other;
 
         return Objects.equals(this.nextHop(), that.nextHop())
                 && Objects.equals(this.label, that.label);

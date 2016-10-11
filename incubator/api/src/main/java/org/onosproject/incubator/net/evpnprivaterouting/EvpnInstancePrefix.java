@@ -26,26 +26,19 @@ import org.onlab.packet.MacAddress;
 /**
  * Represents a route.
  */
-public final class EvpnPrivatePrefix {
+public final class EvpnInstancePrefix {
 
-    private final EvpnMessage em;
     private final MacAddress prefix;
 
     // new add
-    private EvpnPrivatePrefix(EvpnMessage em, MacAddress prefix) {
-        checkNotNull(em);
+    private EvpnInstancePrefix(EvpnInstance em, MacAddress prefix) {
         checkNotNull(prefix);
-        this.em = em;
         this.prefix = prefix;
     }
 
-    public static EvpnPrivatePrefix evpnPrefix(EvpnMessage em,
-                                        MacAddress prefix) {
-        return new EvpnPrivatePrefix(em, prefix);
-    }
-
-    public EvpnMessage evpnMessage() {
-        return em;
+    public static EvpnInstancePrefix evpnPrefix(EvpnInstance em,
+                                                MacAddress prefix) {
+        return new EvpnInstancePrefix(em, prefix);
     }
 
     /**
@@ -59,7 +52,7 @@ public final class EvpnPrivatePrefix {
 
     @Override
     public int hashCode() {
-        return Objects.hash(em, prefix);
+        return Objects.hash(prefix);
     }
 
     @Override
@@ -68,19 +61,17 @@ public final class EvpnPrivatePrefix {
             return true;
         }
 
-        if (!(other instanceof EvpnPrivatePrefix)) {
+        if (!(other instanceof EvpnInstancePrefix)) {
             return false;
         }
 
-        EvpnPrivatePrefix that = (EvpnPrivatePrefix) other;
+        EvpnInstancePrefix that = (EvpnInstancePrefix) other;
 
-        return Objects.equals(this.em, that.em)
-                && Objects.equals(this.prefix, that.prefix);
+        return Objects.equals(this.prefix, that.prefix);
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("prefix", this.prefix)
-                .add("em", this.em).toString();
+        return toStringHelper(this).add("prefix", this.prefix).toString();
     }
 }

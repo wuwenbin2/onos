@@ -36,13 +36,13 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.onosproject.event.ListenerService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRoute;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteAdminService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteEvent;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteListener;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteStore;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnPrivateRouteStoreDelegate;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteAdminService;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteEvent;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteListener;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteService;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStore;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStoreDelegate;
 import org.onosproject.net.host.HostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,21 +54,21 @@ import org.slf4j.LoggerFactory;
 @Component
 public class EvpnPrivateRouteManager
         implements
-        ListenerService<EvpnPrivateRouteEvent, EvpnPrivateRouteListener>,
-        EvpnPrivateRouteService, EvpnPrivateRouteAdminService {
+        ListenerService<EvpnInstanceRouteEvent, EvpnInstanceRouteListener>,
+        EvpnInstanceRouteService, EvpnInstanceRouteAdminService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private EvpnPrivateRouteStoreDelegate delegate = new InternalRouteStoreDelegate();
+    private EvpnInstanceRouteStoreDelegate delegate = new InternalRouteStoreDelegate();
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnPrivateRouteStore routeStore;
+    protected EvpnInstanceRouteStore routeStore;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected HostService hostService;
 
     @GuardedBy(value = "this")
-    private Map<EvpnPrivateRouteListener, ListenerQueue> listeners = new HashMap<>();
+    private Map<EvpnInstanceRouteListener, ListenerQueue> listeners = new HashMap<>();
 
     private ThreadFactory threadFactory;
 
@@ -98,14 +98,14 @@ public class EvpnPrivateRouteManager
      * @param listener listener to be added
      */
     @Override
-    public void addListener(EvpnPrivateRouteListener listener) {
+    public void addListener(EvpnInstanceRouteListener listener) {
         synchronized (this) {
             log.debug("Synchronizing current routes to new listener");
             ListenerQueue l = createListenerQueue(listener);
-            Collection<EvpnPrivateRoute> routes = routeStore.getEvpnRoutes();
+            Collection<EvpnInstanceRoute> routes = routeStore.getEvpnRoutes();
             if (routes != null) {
                 routes.forEach(route -> l
-                        .post(new EvpnPrivateRouteEvent(EvpnPrivateRouteEvent.Type.ROUTE_UPDATED,
+                        .post(new EvpnInstanceRouteEvent(EvpnInstanceRouteEvent.Type.ROUTE_UPDATED,
                                                         route)));
             }
 
@@ -117,7 +117,7 @@ public class EvpnPrivateRouteManager
     }
 
     @Override
-    public void removeListener(EvpnPrivateRouteListener listener) {
+    public void removeListener(EvpnInstanceRouteListener listener) {
         synchronized (this) {
             ListenerQueue l = listeners.remove(listener);
             if (l != null) {
@@ -131,7 +131,7 @@ public class EvpnPrivateRouteManager
      *
      * @param event event
      */
-    private void post(EvpnPrivateRouteEvent event) {
+    private void post(EvpnInstanceRouteEvent event) {
         log.debug("Sending event {}", event);
         synchronized (this) {
             listeners.values().forEach(l -> l.post(event));
@@ -139,12 +139,12 @@ public class EvpnPrivateRouteManager
     }
 
     @Override
-    public Collection<EvpnPrivateRoute> getAllRoutes() {
+    public Collection<EvpnInstanceRoute> getAllRoutes() {
         return routeStore.getEvpnRoutes();
     }
 
     @Override
-    public void updateEvpnRoute(Collection<EvpnPrivateRoute> routes) {
+    public void updateEvpnRoute(Collection<EvpnInstanceRoute> routes) {
         synchronized (this) {
             routes.forEach(route -> {
                 routeStore.updateEvpnRoute(route);
@@ -153,7 +153,7 @@ public class EvpnPrivateRouteManager
     }
 
     @Override
-    public void withdrawEvpnRoute(Collection<EvpnPrivateRoute> routes) {
+    public void withdrawEvpnRoute(Collection<EvpnInstanceRoute> routes) {
         synchronized (this) {
             routes.forEach(route -> {
                 log.debug("Received withdraw {}", routes);
@@ -168,7 +168,7 @@ public class EvpnPrivateRouteManager
      * @param listener route listener
      * @return listener queue
      */
-    ListenerQueue createListenerQueue(EvpnPrivateRouteListener listener) {
+    ListenerQueue createListenerQueue(EvpnInstanceRouteListener listener) {
         return new DefaultListenerQueue(listener);
     }
 
@@ -178,22 +178,22 @@ public class EvpnPrivateRouteManager
     private class DefaultListenerQueue implements ListenerQueue {
 
         private final ExecutorService executorService;
-        private final BlockingQueue<EvpnPrivateRouteEvent> queue;
-        private final EvpnPrivateRouteListener listener;
+        private final BlockingQueue<EvpnInstanceRouteEvent> queue;
+        private final EvpnInstanceRouteListener listener;
 
         /**
          * Creates a new listener queue.
          *
          * @param listener route listener to queue updates for
          */
-        public DefaultListenerQueue(EvpnPrivateRouteListener listener) {
+        public DefaultListenerQueue(EvpnInstanceRouteListener listener) {
             this.listener = listener;
             queue = new LinkedBlockingQueue<>();
             executorService = newSingleThreadExecutor(threadFactory);
         }
 
         @Override
-        public void post(EvpnPrivateRouteEvent event) {
+        public void post(EvpnInstanceRouteEvent event) {
             queue.add(event);
         }
 
@@ -227,9 +227,9 @@ public class EvpnPrivateRouteManager
      * Delegate to receive events from the route store.
      */
     private class InternalRouteStoreDelegate
-            implements EvpnPrivateRouteStoreDelegate {
+            implements EvpnInstanceRouteStoreDelegate {
         @Override
-        public void notify(EvpnPrivateRouteEvent event) {
+        public void notify(EvpnInstanceRouteEvent event) {
             post(event);
         }
     }

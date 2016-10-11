@@ -23,7 +23,8 @@ import java.util.Objects;
 /**
  * Describes an event about a route.
  */
-public class EvpnPrivateRouteEvent extends AbstractEvent<EvpnPrivateRouteEvent.Type, EvpnPrivateRoute> {
+public class EvpnInstanceRouteEvent
+        extends AbstractEvent<EvpnInstanceRouteEvent.Type, EvpnInstanceRoute> {
 
     /**
      * Route event type.
@@ -52,7 +53,7 @@ public class EvpnPrivateRouteEvent extends AbstractEvent<EvpnPrivateRouteEvent.T
      * @param type event type
      * @param subject event subject
      */
-    public EvpnPrivateRouteEvent(Type type, EvpnPrivateRoute subject) {
+    public EvpnInstanceRouteEvent(Type type, EvpnInstanceRoute subject) {
         super(type, subject);
     }
 
@@ -63,7 +64,8 @@ public class EvpnPrivateRouteEvent extends AbstractEvent<EvpnPrivateRouteEvent.T
      * @param subject event subject
      * @param time event time
      */
-    protected EvpnPrivateRouteEvent(Type type, EvpnPrivateRoute subject, long time) {
+    protected EvpnInstanceRouteEvent(Type type, EvpnInstanceRoute subject,
+                                     long time) {
         super(type, subject, time);
     }
 
@@ -78,13 +80,13 @@ public class EvpnPrivateRouteEvent extends AbstractEvent<EvpnPrivateRouteEvent.T
             return true;
         }
 
-        if (!(other instanceof EvpnPrivateRouteEvent)) {
+        if (!(other instanceof EvpnInstanceRouteEvent)) {
             return false;
         }
 
-        EvpnPrivateRouteEvent that = (EvpnPrivateRouteEvent) other;
+        EvpnInstanceRouteEvent that = (EvpnInstanceRouteEvent) other;
 
-        return Objects.equals(this.subject(), that.subject()) &&
-                Objects.equals(this.type(), that.type());
+        return Objects.equals(this.subject(), that.subject())
+                && Objects.equals(this.type(), that.type());
     }
 }

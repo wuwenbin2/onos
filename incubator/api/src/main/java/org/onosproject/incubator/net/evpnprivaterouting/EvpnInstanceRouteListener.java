@@ -16,10 +16,11 @@
 
 package org.onosproject.incubator.net.evpnprivaterouting;
 
-import org.onosproject.store.StoreDelegate;
+import org.onosproject.event.EventListener;
 
 /**
- * Route store delegate abstraction.
+ * Listener for route events.
  */
-public interface EvpnPrivateRouteStoreDelegate extends StoreDelegate<EvpnPrivateRouteEvent> {
+public interface EvpnInstanceRouteListener
+        extends EventListener<EvpnInstanceRouteEvent> {
 }

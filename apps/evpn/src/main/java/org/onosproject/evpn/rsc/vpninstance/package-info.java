@@ -14,30 +14,7 @@
  * limitations under the License.
  */
 
-package org.onosproject.incubator.net.evpnprivaterouting.impl;
-
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteEvent;
-
 /**
- * Queues updates for a route listener to ensure they are received in the
- * correct order.
+ * VPN resources that used by l3vpn.
  */
-interface ListenerQueue {
-
-    /**
-     * Posts an event to the listener.
-     *
-     * @param event event
-     */
-    void post(EvpnInstanceRouteEvent event);
-
-    /**
-     * Initiates event delivery to the listener.
-     */
-    void start();
-
-    /**
-     * Halts event delivery to the listener.
-     */
-    void stop();
-}
+package org.onosproject.evpn.rsc.vpninstance;

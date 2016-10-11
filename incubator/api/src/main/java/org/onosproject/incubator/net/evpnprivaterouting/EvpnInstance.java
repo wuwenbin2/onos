@@ -27,15 +27,15 @@ import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 /**
  * Represents a route.
  */
-public final class EvpnMessage {
+public final class EvpnInstance {
 
     private final RouteDistinguisher rd;
     private final RouteTarget rt;
-    private final EvpnName evpnName;
+    private final EvpnInstanceName evpnName;
 
     // new add
-    private EvpnMessage(RouteDistinguisher rd, RouteTarget rt,
-                        EvpnName evpnName) {
+    private EvpnInstance(RouteDistinguisher rd, RouteTarget rt,
+                         EvpnInstanceName evpnName) {
         checkNotNull(rd);
         checkNotNull(rt);
         checkNotNull(evpnName);
@@ -44,9 +44,10 @@ public final class EvpnMessage {
         this.evpnName = evpnName;
     }
 
-    public static EvpnMessage evpnMessage(RouteDistinguisher rd, RouteTarget rt,
-                                          EvpnName evpnName) {
-        return new EvpnMessage(rd, rt, evpnName);
+    public static EvpnInstance evpnMessage(RouteDistinguisher rd,
+                                           RouteTarget rt,
+                                           EvpnInstanceName evpnName) {
+        return new EvpnInstance(rd, rt, evpnName);
     }
 
     public RouteDistinguisher routeDistinguisher() {
@@ -57,7 +58,7 @@ public final class EvpnMessage {
         return rt;
     }
 
-    public EvpnName evpnName() {
+    public EvpnInstanceName evpnName() {
         return evpnName;
     }
 
@@ -72,11 +73,11 @@ public final class EvpnMessage {
             return true;
         }
 
-        if (!(other instanceof EvpnMessage)) {
+        if (!(other instanceof EvpnInstance)) {
             return false;
         }
 
-        EvpnMessage that = (EvpnMessage) other;
+        EvpnInstance that = (EvpnInstance) other;
 
         return Objects.equals(this.evpnName, that.evpnName)
                 && Objects.equals(this.rd, that.rd)

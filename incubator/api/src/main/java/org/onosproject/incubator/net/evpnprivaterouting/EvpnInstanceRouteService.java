@@ -18,28 +18,20 @@ package org.onosproject.incubator.net.evpnprivaterouting;
 
 import java.util.Collection;
 
-import org.onosproject.store.Store;
+import org.onosproject.event.ListenerService;
 
 /**
- * Unicast route store.
+ * Unicast IP route service.
  */
-public interface EvpnPrivateRouteStore
-        extends Store<EvpnPrivateRouteEvent, EvpnPrivateRouteStoreDelegate> {
+public interface EvpnInstanceRouteService
+        extends
+        ListenerService<EvpnInstanceRouteEvent, EvpnInstanceRouteListener> {
 
     /**
-     * Adds or updates the given route in the store.
+     * Returns all routes for all route tables in the system.
      *
-     * @param route route to add or update
+     * @return map of route table name to routes in that table
      */
-    void updateEvpnRoute(EvpnPrivateRoute route);
-
-    /**
-     * Removes the given route from the store.
-     *
-     * @param route route to remove
-     */
-    void removeEvpnRoute(EvpnPrivateRoute route);
-
-    Collection<EvpnPrivateRoute> getEvpnRoutes();
+    Collection<EvpnInstanceRoute> getAllRoutes();
 
 }

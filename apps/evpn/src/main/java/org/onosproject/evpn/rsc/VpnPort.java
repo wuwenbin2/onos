@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
-package org.onosproject.incubator.net.evpnprivaterouting;
-
-import org.onosproject.event.EventListener;
+package org.onosproject.evpn.rsc;
 
 /**
- * Listener for route events.
+ * Representation of a VPNPort.
  */
-public interface EvpnPrivateRouteListener extends EventListener<EvpnPrivateRouteEvent> {
+public interface VpnPort {
+
+    /**
+     * Returns the VPN instance identifier.
+     *
+     * @return VPN instance identifier
+     */
+    VpnPortId id();
+
+    /**
+     * Returns the VPN instance identifier.
+     *
+     * @return VPN instance identifier
+     */
+    VpnInstanceId vpnInstance();
 }
