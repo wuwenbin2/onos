@@ -27,14 +27,12 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Service;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
 import org.onosproject.incubator.net.evpnrouting.EvpnNextHop;
 import org.onosproject.incubator.net.evpnrouting.EvpnPrefix;
 import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteEvent;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteStore;
 import org.onosproject.incubator.net.evpnrouting.EvpnRouteStoreDelegate;
-import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.AbstractStore;
 
 import com.google.common.collect.HashMultimap;

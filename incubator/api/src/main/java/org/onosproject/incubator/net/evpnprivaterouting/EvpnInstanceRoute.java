@@ -62,7 +62,7 @@ public class EvpnInstanceRoute {
      *
      * @return IP prefix
      */
-    public RouteDistinguisher RouteDistinguisher() {
+    public RouteDistinguisher routeDistinguisher() {
         return rd;
     }
 

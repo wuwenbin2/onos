@@ -66,7 +66,7 @@ public class LocalEvpnPrivateRouteStore
         if (routeTables.get(route.evpnInstanceName()) == null) {
             EvpnInstanceRouteTable evpnInstanceRouteTable = new EvpnInstanceRouteTable(route
                     .evpnInstanceName(), route
-                            .RouteDistinguisher(), route.routeTarget());
+                            .routeDistinguisher(), route.routeTarget());
             routeTables.put(route.evpnInstanceName(), evpnInstanceRouteTable);
         }
         routeTables.get(route.evpnInstanceName()).update(route);
@@ -100,7 +100,13 @@ public class LocalEvpnPrivateRouteStore
         });
         return list;
     }
-
+    @Override
+    public Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name) {
+        if (routeTables == null) {
+            return null;
+        }
+        return routeTables.get(name).routesMap;
+    }
     @Override
     public RouteTarget getRtByInstanceName(EvpnInstanceName name) {
         if (routeTables == null) {

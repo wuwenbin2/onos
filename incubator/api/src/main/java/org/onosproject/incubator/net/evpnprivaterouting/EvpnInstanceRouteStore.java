@@ -17,6 +17,7 @@
 package org.onosproject.incubator.net.evpnprivaterouting;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.Store;
@@ -41,9 +42,34 @@ public interface EvpnInstanceRouteStore
      */
     void removeEvpnRoute(EvpnInstanceRoute route);
 
+    /**
+     * Get routes by the given instance name.
+     *
+     * @param evpnName the given evpn name
+     * @return collection of EvpnInstanceRoute
+     */
     Collection<EvpnInstanceRoute> getEvpnRoutes(EvpnInstanceName evpnName);
 
+    /**
+     * Get aLL routes.
+     *
+     * @return collection of EvpnInstanceRoute
+     */
     Collection<EvpnInstanceRoute> getEvpnRoutes();
 
+    /**
+     * Get RouteTarget by Vpn instance name.
+     *
+     * @param name
+     * @return RouteTarget
+     */
     RouteTarget getRtByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get Route Map by Vpn instance name.
+     *
+     * @param name
+     * @return map of route
+     */
+    Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name);
 }
