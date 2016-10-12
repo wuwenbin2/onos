@@ -104,6 +104,8 @@ public class BgpRouteProvider extends AbstractProvider
     @Deactivate
     public void deactivate() {
         controller.removeRouteListener(bgpRouteListener);
+        providerRegistry.unregister(this);
+        providerService = null;
         log.info("Bgp Route Provider deactivate");
     }
 
@@ -145,8 +147,8 @@ public class BgpRouteProvider extends AbstractProvider
 
     private static RouteDistinguisher stringToRD(String rdString) {
         if (rdString.contains(":")) {
-            if ((rdString.indexOf("!") != 0)
-                    && (rdString.indexOf("!") != rdString.length() - 1)) {
+            if ((rdString.indexOf(":") != 0)
+                    && (rdString.indexOf(":") != rdString.length() - 1)) {
                 String[] tem = rdString.split(":");
                 short as = (short) Integer.parseInt(tem[0]);
                 int assignednum = Integer.parseInt(tem[1]);
@@ -169,8 +171,8 @@ public class BgpRouteProvider extends AbstractProvider
 
     private static RouteTarget stringToRT(String rdString) {
         if (rdString.contains(":")) {
-            if ((rdString.indexOf("!") != 0)
-                    && (rdString.indexOf("!") != rdString.length() - 1)) {
+            if ((rdString.indexOf(":") != 0)
+                    && (rdString.indexOf(":") != rdString.length() - 1)) {
                 String[] tem = rdString.split(":");
                 short as = Short.parseShort(tem[0]);
                 int assignednum = Integer.parseInt(tem[1]);
