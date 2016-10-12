@@ -17,8 +17,10 @@
 package org.onosproject.incubator.net.evpnprivaterouting;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.onosproject.event.ListenerService;
+import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 
 /**
  * Unicast IP route service.
@@ -33,5 +35,21 @@ public interface EvpnInstanceRouteService
      * @return map of route table name to routes in that table
      */
     Collection<EvpnInstanceRoute> getAllRoutes();
+
+    /**
+     * Get Route Map by Vpn instance name.
+     *
+     * @param name
+     * @return map of route
+     */
+    Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get RouteTarget by Vpn instance name.
+     *
+     * @param name
+     * @return RouteTarget
+     */
+    RouteTarget getRtByInstanceName(EvpnInstanceName name);
 
 }

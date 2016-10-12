@@ -21,7 +21,7 @@ import java.util.Collection;
 /**
  * Service allowing mutation of unicast routing state.
  */
-public interface EvpnInstanceRouteAdminService extends EvpnInstanceRouteService {
+public interface EvpnInstanceRouteAdminService {
 
     /**
      * Updates the given routes in the route service.
@@ -36,5 +36,4 @@ public interface EvpnInstanceRouteAdminService extends EvpnInstanceRouteService 
      * @param routes collection of routes to withdraw
      */
     void withdrawEvpnRoute(Collection<EvpnInstanceRoute> routes);
-
 }

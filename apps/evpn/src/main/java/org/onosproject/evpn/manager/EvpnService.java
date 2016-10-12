@@ -15,6 +15,39 @@
  */
 package org.onosproject.evpn.manager;
 
-public interface EvpnService {
+import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
+import org.onosproject.net.Host;
 
+public interface EvpnService {
+    /**
+     * Transfer remote route to private route and set mpls flows out when
+     * BgpRoute update.
+     *
+     * @param route evpn route
+     */
+    void onBgpEvpnRouteUpdate(EvpnRoute route);
+
+    /**
+     * Transfer remote route to private route and delete mpls flows out when
+     * BgpRoute delete.
+     *
+     * @param route
+     */
+    void onBgpEvpnRouteDelete(EvpnRoute route);
+
+    /**
+     * Get vpn info from Gluon shim and create route, set flows when host
+     * detected.
+     *
+     * @param host
+     */
+    void onHostDetected(Host host);
+
+    /**
+     * Get vpn info from Gluon shim and delete route, set flows when host
+     * vanished.
+     *
+     * @param host
+     */
+    void onHostVanished(Host host);
 }

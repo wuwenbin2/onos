@@ -36,6 +36,9 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.onosproject.event.ListenerService;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteAdminService;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteEvent;
@@ -43,6 +46,7 @@ import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteListene
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteService;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStore;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStoreDelegate;
+import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.net.host.HostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,6 +145,14 @@ public class EvpnPrivateRouteManager
     @Override
     public Collection<EvpnInstanceRoute> getAllRoutes() {
         return routeStore.getEvpnRoutes();
+    }
+    @Override
+    public Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name) {
+        return routeStore.getRouteMapByInstanceName(name);
+    }
+    @Override
+    public RouteTarget getRtByInstanceName(EvpnInstanceName name) {
+        return routeStore.getRtByInstanceName(name);
     }
 
     @Override

@@ -32,5 +32,4 @@ public interface EvpnRouteService
      * @return map of route table name to routes in that table
      */
     Collection<EvpnRoute> getAllRoutes();
-
 }
