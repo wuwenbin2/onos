@@ -47,20 +47,6 @@ public interface VpnInstance {
     RouteDistinguisher routeDistinguishers();
 
     /**
-     * Returns the VPN instance create date and time.
-     *
-     * @return VPN instance create date and time
-     */
-    String createdAt();
-
-    /**
-     * Returns the VPN instance update date and time.
-     *
-     * @return VPN instance update date and time
-     */
-    String updatedAt();
-
-    /**
      * Returns the VPN instance name.
      *
      * @return VPN instance name
@@ -72,5 +58,5 @@ public interface VpnInstance {
      *
      * @return VPN instance ipv4 family
      */
-    RouteTarget ipv4Family();
+    RouteTarget routeTarget();
 }

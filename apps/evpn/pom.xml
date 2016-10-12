@@ -64,4 +64,31 @@
             <version>${project.version}</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>
+                            ${project.groupId}.${project.artifactId}
+                        </Bundle-SymbolicName>
+                        <Import-Package>*,com.fasterxml.jackson.annotation,
+                                        com.fasterxml.jackson.core,
+                                        com.fasterxml.jackson.databind.annotation,
+                                        com.fasterxml.jackson.databind.ser,
+                                        com.fasterxml.jackson.databind.deser,
+                                        com.fasterxml.jackson.databind.ser.std,
+                                        com.fasterxml.jackson.databind.deser.std,
+                                        com.fasterxml.jackson.module.afterburner,
+                                        com.fasterxml.jackson.module.afterburner.ser,
+                                        com.fasterxml.jackson.module.afterburner.deser
+                                        </Import-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
