@@ -295,10 +295,10 @@ public class EvpnManager implements EvpnService {
         }
         // Get info from Gluon Shim
         VpnPort vpnPort = vpnPortService.getPort(VpnPortId.vpnPortId(ifaceId));
-        VpnInstanceId vpnInstanceId = vpnPort.vpnInstance();
+        VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
         VpnInstance vpnInstance = vpnInstanceService.getInstance(vpnInstanceId);
         RouteDistinguisher rd = vpnInstance.routeDistinguishers();
-        RouteTarget rt = vpnInstance.ipv4Family();
+        RouteTarget rt = vpnInstance.routeTarget();
         EvpnInstanceName instanceName = vpnInstance.vpnInstanceName();
 
         // create private route and get label
@@ -354,10 +354,10 @@ public class EvpnManager implements EvpnService {
         }
         // Get info from Gluon Shim
         VpnPort vpnPort = vpnPortService.getPort(VpnPortId.vpnPortId(ifaceId));
-        VpnInstanceId vpnInstanceId = vpnPort.vpnInstance();
+        VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
         VpnInstance vpnInstance = vpnInstanceService.getInstance(vpnInstanceId);
         RouteDistinguisher rd = vpnInstance.routeDistinguishers();
-        RouteTarget rt = vpnInstance.ipv4Family();
+        RouteTarget rt = vpnInstance.routeTarget();
         EvpnInstanceName instanceName = vpnInstance.vpnInstanceName();
         Map<EvpnInstancePrefix, EvpnInstanceNextHop> routeMap = privateRouteService
                 .getRouteMapByInstanceName(instanceName);
