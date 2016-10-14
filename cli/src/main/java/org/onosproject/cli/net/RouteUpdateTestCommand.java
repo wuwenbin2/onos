@@ -16,6 +16,7 @@
 
 package org.onosproject.cli.net;
 
+import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.onlab.packet.Ip4Address;
 import org.onlab.packet.MacAddress;
@@ -32,6 +33,9 @@ import org.onosproject.incubator.net.evpnrouting.RouteTarget;
  */
 @Command(scope = "onos", name = "evpn-route-add", description = "Adds a route to the route table")
 public class RouteUpdateTestCommand extends AbstractShellCommand {
+    @Argument(index = 0, name = "ip", description = "IP prefix of the route",
+            required = true)
+    String ip = null;
 
     @Override
     protected void execute() {
@@ -40,12 +44,13 @@ public class RouteUpdateTestCommand extends AbstractShellCommand {
 
         Source source = Source.LOCAL;
         MacAddress macAddress = MacAddress.valueOf("e4:68:a3:4e:dc:01");
-        Ip4Address nextHop = Ip4Address.valueOf("10.1.1.1");
+        Ip4Address ip4Address = Ip4Address.valueOf("1.1.1.1");
+        Ip4Address nextHop = Ip4Address.valueOf(ip);
         RouteDistinguisher rd = RouteDistinguisher.routeDistinguisher("100:1");
         RouteTarget rt = RouteTarget.routeTarget("100:1");
         Label label = Label.label(100);
-        EvpnRoute route = new EvpnRoute(source, macAddress, nextHop, rd, rt,
-                                        label);
+        EvpnRoute route = new EvpnRoute(source, macAddress, ip4Address, nextHop,
+                                        rd, rt, label);
         service.sendEvpnMessage(route);
     }
 
