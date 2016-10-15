@@ -127,8 +127,4 @@ public interface BasePortService {
      *         successfully.
      */
     boolean removePorts(Iterable<VirtualPortId> virtualPortIds);
-
-    void updateEtcdUrl(String url);
-
-    void etcdMonitor();
 }

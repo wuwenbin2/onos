@@ -19,12 +19,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,6 +37,9 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
+import org.onlab.packet.Ip4Address;
+import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onlab.util.KryoNamespace;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
@@ -41,7 +47,12 @@ import org.onosproject.evpn.rsc.DefaultVpnInstance;
 import org.onosproject.evpn.rsc.VpnInstance;
 import org.onosproject.evpn.rsc.VpnInstanceId;
 import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstance;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
+import org.onosproject.incubator.net.evpnrouting.Label;
 import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.serializers.KryoNamespaces;
@@ -55,12 +66,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 
-import mousio.client.promises.ResponsePromise;
-import mousio.client.promises.ResponsePromise.IsSimplePromiseResponseHandler;
-import mousio.client.retry.RetryNTimes;
-import mousio.etcd4j.EtcdClient;
-import mousio.etcd4j.promises.EtcdResponsePromise;
-import mousio.etcd4j.responses.EtcdKeysResponse;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.justinsb.etcd.EtcdClient;
+import com.justinsb.etcd.EtcdClientException;
+import com.justinsb.etcd.EtcdResult;
 
 /**
  * Provides implementation of the VpnInstance APIs.
@@ -74,8 +83,8 @@ public class VpnInstanceManager implements VpnInstanceService {
     private static final String VPNINSTANCE = "evpn-vpn-instance-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String KEYPATH = "/net-l3vpn/proton/VpnInstance";
-    private static String etcduri = "http://192.168.212.165:2379";
-
+    private static final String CONFPATH = "../..//etcdMonitor.properties";
+    private static String etcduri = "";
     private static final String VPNINSTANCE_ID_NOT_NULL = "VpnInstance ID cannot be null";
     private static final String VPNINSTANCE_NOT_NULL = "VpnInstance cannot be null";
     private static final String JSON_NOT_NULL = "JsonNode can not be null";
@@ -83,11 +92,11 @@ public class VpnInstanceManager implements VpnInstanceService {
 
     protected EventuallyConsistentMap<VpnInstanceId, VpnInstance> vpnInstanceStore;
     protected ApplicationId appId;
-    private EtcdClient etcd;
-
+    private EtcdClient etcdClient;
     private final ExecutorService executorService = Executors
             .newFixedThreadPool(5, groupedThreads("EVPN-VpnInstance",
                                                   "executor-%d", log));
+
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected StorageService storageService;
 
@@ -105,8 +114,27 @@ public class VpnInstanceManager implements VpnInstanceService {
                 .withName(VPNINSTANCE).withSerializer(serializer)
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
-        etcd = new EtcdClient(URI.create(etcduri));
         log.info("Evpn Vpn Instance Started");
+        initEtcdMonitor();
+    }
+
+    private void initEtcdMonitor() {
+        String ip;
+        String port;
+        Properties prop = new Properties();
+        InputStream in = Object.class.getResourceAsStream(CONFPATH);
+        try {
+            prop.load(in);
+            ip = prop.getProperty("server.ip").trim();
+            port = prop.getProperty("server.port").trim();
+            etcduri = "http://" + ip + ":" + port;
+        } catch (IOException e) {
+            log.debug(e.getMessage());
+        }
+        if (!etcduri.equals("")) {
+            etcdClient = new EtcdClient(URI.create(etcduri));
+            etcdMonitor();
+        }
     }
 
     @Deactivate
@@ -189,25 +217,21 @@ public class VpnInstanceManager implements VpnInstanceService {
      */
     public void etcdMonitor() {
         executorService.execute(new Runnable() {
-            @Override
             public void run() {
                 try {
-                    EtcdResponsePromise<EtcdKeysResponse> promise = etcd
-                            .get(KEYPATH)
-                            .setRetryPolicy(new RetryNTimes(200, 20000))
-                            .recursive().waitForChange().send();
-                    promise.addListener(new IsSimplePromiseResponseHandler<EtcdKeysResponse>() {
-                        @Override
-                        public void onResponse(ResponsePromise<EtcdKeysResponse> response) {
-                            EtcdKeysResponse responseKey = response.getNow();
-                            log.debug("Etcd Vpn Instance response data is {}",
-                                      responseKey.node.value);
-                            processEtcdResponse(responseKey);
-                            etcdMonitor();
-                        }
-                    });
-                } catch (IOException e) {
-                    log.debug("Etcd monitor errer {}", e.toString());
+                    log.info("Etcd monitor to url {} and keypath {}", etcduri,
+                             KEYPATH);
+                    ListenableFuture<EtcdResult> watchFuture = etcdClient
+                            .watch(KEYPATH, null, true);
+                    EtcdResult watchResult = watchFuture.get();
+                    processEtcdResponse(watchResult);
+                    etcdMonitor();
+                } catch (InterruptedException e) {
+                    log.debug("Etcd monitor with error {}", e.getMessage());
+                } catch (ExecutionException e) {
+                    log.debug("Etcd monitor with error {}", e.getMessage());
+                } catch (EtcdClientException e) {
+                    log.debug("Etcd monitor with error {}", e.getMessage());
                 }
             }
         });
@@ -218,9 +242,9 @@ public class VpnInstanceManager implements VpnInstanceService {
      *
      * @param response Etcd response
      */
-    private void processEtcdResponse(EtcdKeysResponse response) {
+    private void processEtcdResponse(EtcdResult response) {
         checkNotNull(response, RESPONSE_NOT_NULL);
-        if (response.action.name() == "delete") {
+        if (response.action.equals("delete")) {
             String[] list = response.node.key.split("/");
             VpnInstanceId vpnInstanceId = VpnInstanceId
                     .vpnInstanceId(list[list.length - 1]);
@@ -260,6 +284,21 @@ public class VpnInstanceManager implements VpnInstanceService {
         VpnInstance vpnInstance = new DefaultVpnInstance(id, name, description,
                                                          routeDistinguisher,
                                                          routeTarget);
+        EvpnInstanceRoute vpnInstanceRout = new EvpnInstanceRoute(name,
+                                                                  routeDistinguisher,
+                                                                  routeTarget,
+                                                                  EvpnInstancePrefix
+                                                                          .evpnPrefix(EvpnInstance
+                                                                                  .evpnMessage(routeDistinguisher,
+                                                                                               routeTarget,
+                                                                                               name),
+                                                                                      MacAddress.ZERO,
+                                                                                      Ip4Address
+                                                                                      .valueOf("0.0.0.0")),
+                                                                  EvpnInstanceNextHop
+                                                                          .evpnNextHop(IpAddress
+                                                                                  .valueOf("127.0.0.1"),
+                                                                                       Label.label(0)));
         vpnInstanceMap.put(id, vpnInstance);
 
         return Collections.unmodifiableCollection(vpnInstanceMap.values());
