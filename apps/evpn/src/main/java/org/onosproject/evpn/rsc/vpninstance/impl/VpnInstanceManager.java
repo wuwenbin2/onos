@@ -83,7 +83,7 @@ public class VpnInstanceManager implements VpnInstanceService {
     private static final String VPNINSTANCE = "evpn-vpn-instance-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String KEYPATH = "/net-l3vpn/proton/VpnInstance";
-    private static final String CONFPATH = "../..//etcdMonitor.properties";
+    private static final String CONFPATH = "../../etcdMonitor.properties";
     private static String etcduri = "";
     private static final String VPNINSTANCE_ID_NOT_NULL = "VpnInstance ID cannot be null";
     private static final String VPNINSTANCE_NOT_NULL = "VpnInstance cannot be null";
@@ -133,7 +133,7 @@ public class VpnInstanceManager implements VpnInstanceService {
         }
         if (!etcduri.equals("")) {
             etcdClient = new EtcdClient(URI.create(etcduri));
-            etcdMonitor();
+            //etcdMonitor();
         }
     }
 

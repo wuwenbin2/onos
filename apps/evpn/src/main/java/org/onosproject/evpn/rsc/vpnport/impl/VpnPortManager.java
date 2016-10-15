@@ -73,7 +73,7 @@ public class VpnPortManager implements VpnPortService {
     private static final String VPNPORT = "evpn-vpn-port-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String KEYPATH = "/net-l3vpn/proton/VPNPort";
-    private static final String CONFPATH = "../..//etcdMonitor.properties";
+    private static final String CONFPATH = "../../etcdMonitor.properties";
     private static String etcduri = "";
     private static final String VPNPORT_ID_NOT_NULL = "VpnPort ID cannot be null";
     private static final String VPNPORT_NOT_NULL = "VpnPort cannot be null";
@@ -123,7 +123,7 @@ public class VpnPortManager implements VpnPortService {
         }
         if (!etcduri.equals("")) {
             etcdClient = new EtcdClient(URI.create(etcduri));
-            etcdMonitor();
+            //etcdMonitor();
         }
     }
 
