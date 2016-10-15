@@ -19,13 +19,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -55,7 +53,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-
 import com.google.common.util.concurrent.ListenableFuture;
 import com.justinsb.etcd.EtcdClient;
 import com.justinsb.etcd.EtcdClientException;
@@ -73,8 +70,6 @@ public class VpnPortManager implements VpnPortService {
     private static final String VPNPORT = "evpn-vpn-port-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String KEYPATH = "/net-l3vpn/proton/VPNPort";
-    private static final String CONFPATH = "../../etcdMonitor.properties";
-    private static String etcduri = "";
     private static final String VPNPORT_ID_NOT_NULL = "VpnPort ID cannot be null";
     private static final String VPNPORT_NOT_NULL = "VpnPort cannot be null";
     private static final String JSON_NOT_NULL = "JsonNode can not be null";
@@ -105,26 +100,12 @@ public class VpnPortManager implements VpnPortService {
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
         log.info("Evpn Vpn Port Started");
-        initEtcdMonitor();
     }
 
-    private void initEtcdMonitor() {
-        String ip;
-        String port;
-        Properties prop = new Properties();
-        InputStream in = Object.class.getResourceAsStream(CONFPATH);
-        try {
-            prop.load(in);
-            ip = prop.getProperty("server.ip").trim();
-            port = prop.getProperty("server.port").trim();
-            etcduri = "http://" + ip + ":" + port;
-        } catch (IOException e) {
-            log.debug(e.getMessage());
-        }
-        if (!etcduri.equals("")) {
+    @Override
+    public void initEtcdMonitor(String etcduri) {
             etcdClient = new EtcdClient(URI.create(etcduri));
-            //etcdMonitor();
-        }
+            etcdMonitor(etcduri);
     }
 
     @Deactivate
@@ -204,7 +185,7 @@ public class VpnPortManager implements VpnPortService {
     /**
      * Start Etcd monitor.
      */
-    public void etcdMonitor() {
+    private void etcdMonitor(String etcduri) {
         executorService.execute(new Runnable() {
             public void run() {
                 try {
@@ -214,7 +195,7 @@ public class VpnPortManager implements VpnPortService {
                             .watch(KEYPATH, null, true);
                     EtcdResult watchResult = watchFuture.get();
                     processEtcdResponse(watchResult);
-                    etcdMonitor();
+                    etcdMonitor(etcduri);
                 } catch (InterruptedException e) {
                     log.debug("Etcd monitor with error {}", e.getMessage());
                 } catch (ExecutionException e) {

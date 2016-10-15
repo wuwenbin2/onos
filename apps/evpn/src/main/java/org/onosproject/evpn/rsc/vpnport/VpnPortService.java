@@ -71,4 +71,6 @@ public interface VpnPortService {
      *         successfully.
      */
     boolean removePorts(Iterable<VpnPortId> vpnPortIds);
+
+    void initEtcdMonitor(String etcduri);
 }

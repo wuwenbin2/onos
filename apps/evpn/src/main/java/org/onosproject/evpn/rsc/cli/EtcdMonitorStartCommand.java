@@ -15,62 +15,59 @@
  */
 package org.onosproject.evpn.rsc.cli;
 
-import java.util.Collection;
-import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.onosproject.cli.AbstractShellCommand;
 import org.onosproject.evpn.rsc.baseport.BasePortService;
-import org.onosproject.vtnrsc.VirtualPort;
+import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
+import org.onosproject.evpn.rsc.vpnport.VpnPortService;
 
 /**
  * Supports for create a floating IP.
  */
 @Command(scope = "onos", name = "etcd-baseport-monitor", description = "Supports for start etcd monitor")
 public class EtcdMonitorStartCommand extends AbstractShellCommand {
-    @Argument(index = 0, name = "ipAddress", description = "The ip address of etcd server",
-            required = false, multiValued = false)
+
+    @Option(name = "-i", aliases = "--ip", description = "Etcd server ip address",
+            required = true, multiValued = false)
     String ipAddress = null;
 
-    @Option(name = "-t", aliases = "--start", description = "Start monitor of base port",
-            required = false, multiValued = false)
-    boolean start = false;
-
-    @Option(name = "-o", aliases = "--stop", description = "Stop monitor of base port",
-            required = false, multiValued = false)
-    boolean stop = false;
+    @Option(name = "-t", aliases = "--target",
+            description = "Etcd monitor process : baseport; vpninstance; vpnport",
+            required = true, multiValued = false)
+    String target = null;
 
     @Option(name = "-q", aliases = "--query", description = "query base port data",
             required = false, multiValued = false)
     boolean query = false;
-
+/*
     private static final String FMT = "virtualPortId=%s, networkId=%s, name=%s,"
             + " tenantId=%s, deviceId=%s, adminStateUp=%s, state=%s,"
             + " macAddress=%s, deviceOwner=%s, fixedIp=%s, bindingHostId=%s,"
             + " bindingvnicType=%s, bindingvifType=%s, bindingvnicDetails=%s,"
             + " allowedAddress=%s, securityGroups=%s";
-
+*/
     @Override
     protected void execute() {
-        BasePortService service = get(BasePortService.class);
         try {
             if (ipAddress != null) {
                 String url = "http://" + ipAddress + ":2379";
-                //service.updateEtcdUrl(url);
-            }
-            if (start) {
-                //service.etcdMonitor();
-            }
-
-            if (query) {
-                Collection<VirtualPort> ports = service.getPorts();
-                printPorts(ports);
+                if (target.equals("baseport")) {
+                    BasePortService service = get(BasePortService.class);
+                    service.initEtcdMonitor(url);
+                } else if (target.equals("vpninstance")) {
+                    VpnInstanceService service = get(VpnInstanceService.class);
+                    service.initEtcdMonitor(url);
+                } else if (target.equals("vpnport")) {
+                    VpnPortService service = get(VpnPortService.class);
+                    service.initEtcdMonitor(url);
+                }
             }
         } catch (Exception e) {
             print(null, e.getMessage());
         }
     }
-
+/*
     private void printPorts(Collection<VirtualPort> ports) {
         for (VirtualPort port : ports) {
             printPort(port);
@@ -85,4 +82,5 @@ public class EtcdMonitorStartCommand extends AbstractShellCommand {
               port.bindingVifType(), port.bindingVifDetails(),
               port.allowedAddressPairs(), port.securityGroups());
     }
+    */
 }

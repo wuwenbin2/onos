@@ -19,13 +19,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +50,7 @@ import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
+import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteAdminService;
 import org.onosproject.incubator.net.evpnrouting.Label;
 import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
@@ -65,7 +64,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-
 import com.google.common.util.concurrent.ListenableFuture;
 import com.justinsb.etcd.EtcdClient;
 import com.justinsb.etcd.EtcdClientException;
@@ -83,8 +81,6 @@ public class VpnInstanceManager implements VpnInstanceService {
     private static final String VPNINSTANCE = "evpn-vpn-instance-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String KEYPATH = "/net-l3vpn/proton/VpnInstance";
-    private static final String CONFPATH = "../../etcdMonitor.properties";
-    private static String etcduri = "";
     private static final String VPNINSTANCE_ID_NOT_NULL = "VpnInstance ID cannot be null";
     private static final String VPNINSTANCE_NOT_NULL = "VpnInstance cannot be null";
     private static final String JSON_NOT_NULL = "JsonNode can not be null";
@@ -101,6 +97,9 @@ public class VpnInstanceManager implements VpnInstanceService {
     protected StorageService storageService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected EvpnInstanceRouteAdminService routeService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
 
     @Activate
@@ -115,26 +114,12 @@ public class VpnInstanceManager implements VpnInstanceService {
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
         log.info("Evpn Vpn Instance Started");
-        initEtcdMonitor();
     }
 
-    private void initEtcdMonitor() {
-        String ip;
-        String port;
-        Properties prop = new Properties();
-        InputStream in = Object.class.getResourceAsStream(CONFPATH);
-        try {
-            prop.load(in);
-            ip = prop.getProperty("server.ip").trim();
-            port = prop.getProperty("server.port").trim();
-            etcduri = "http://" + ip + ":" + port;
-        } catch (IOException e) {
-            log.debug(e.getMessage());
-        }
-        if (!etcduri.equals("")) {
-            etcdClient = new EtcdClient(URI.create(etcduri));
-            //etcdMonitor();
-        }
+    @Override
+    public void initEtcdMonitor(String etcduri) {
+        etcdClient = new EtcdClient(URI.create(etcduri));
+        etcdMonitor(etcduri);
     }
 
     @Deactivate
@@ -215,7 +200,7 @@ public class VpnInstanceManager implements VpnInstanceService {
     /**
      * Start Etcd monitor.
      */
-    public void etcdMonitor() {
+    private void etcdMonitor(String etcduri) {
         executorService.execute(new Runnable() {
             public void run() {
                 try {
@@ -225,7 +210,7 @@ public class VpnInstanceManager implements VpnInstanceService {
                             .watch(KEYPATH, null, true);
                     EtcdResult watchResult = watchFuture.get();
                     processEtcdResponse(watchResult);
-                    etcdMonitor();
+                    etcdMonitor(etcduri);
                 } catch (InterruptedException e) {
                     log.debug("Etcd monitor with error {}", e.getMessage());
                 } catch (ExecutionException e) {
@@ -284,7 +269,7 @@ public class VpnInstanceManager implements VpnInstanceService {
         VpnInstance vpnInstance = new DefaultVpnInstance(id, name, description,
                                                          routeDistinguisher,
                                                          routeTarget);
-        EvpnInstanceRoute vpnInstanceRout = new EvpnInstanceRoute(name,
+        EvpnInstanceRoute vpnInstanceRoute = new EvpnInstanceRoute(name,
                                                                   routeDistinguisher,
                                                                   routeTarget,
                                                                   EvpnInstancePrefix
@@ -300,7 +285,7 @@ public class VpnInstanceManager implements VpnInstanceService {
                                                                                   .valueOf("127.0.0.1"),
                                                                                        Label.label(0)));
         vpnInstanceMap.put(id, vpnInstance);
-
+        routeService.updateEvpnRoute(Sets.newHashSet(vpnInstanceRoute));
         return Collections.unmodifiableCollection(vpnInstanceMap.values());
     }
 }
