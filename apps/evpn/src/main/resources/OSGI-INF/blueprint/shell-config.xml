@@ -19,5 +19,17 @@
     <command>
       <action class="org.onosproject.evpn.rsc.cli.EtcdMonitorStartCommand"/>
     </command>
+    <command>
+      <action class="org.onosproject.evpn.rsc.cli.EvpnInstanceAddCommand"/>
+    </command>
+    <command>
+      <action class="org.onosproject.evpn.rsc.cli.EvpnRouteListCommand"/>
+    </command>
+    <command>
+      <action class="org.onosproject.evpn.rsc.cli.EvpnPrivateRouteList"/>
+    </command>
+    <command>
+      <action class="org.onosproject.evpn.rsc.cli.VpnPortListCommand"/>
+    </command>
   </command-bundle>
 </blueprint>

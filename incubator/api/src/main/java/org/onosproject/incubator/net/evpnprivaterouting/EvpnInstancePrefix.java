@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Objects;
 
+import org.onlab.packet.Ip4Address;
 import org.onlab.packet.MacAddress;
 
 /**
@@ -28,17 +29,19 @@ import org.onlab.packet.MacAddress;
  */
 public final class EvpnInstancePrefix {
 
-    private final MacAddress prefix;
+    private final MacAddress macAddress;
+    private final Ip4Address ipAddress;
 
     // new add
-    private EvpnInstancePrefix(EvpnInstance em, MacAddress prefix) {
-        checkNotNull(prefix);
-        this.prefix = prefix;
+    private EvpnInstancePrefix(EvpnInstance em, MacAddress macAddress, Ip4Address ipAddress) {
+        checkNotNull(macAddress);
+        this.macAddress = macAddress;
+        this.ipAddress = ipAddress;
     }
 
     public static EvpnInstancePrefix evpnPrefix(EvpnInstance em,
-                                                MacAddress prefix) {
-        return new EvpnInstancePrefix(em, prefix);
+                                                MacAddress macAddress, Ip4Address ip4Address) {
+        return new EvpnInstancePrefix(em, macAddress, ip4Address);
     }
 
     /**
@@ -46,13 +49,17 @@ public final class EvpnInstancePrefix {
      *
      * @return IP prefix
      */
-    public MacAddress prefix() {
-        return prefix;
+    public MacAddress macAddress() {
+        return macAddress;
+    }
+
+    public Ip4Address ipAddress() {
+        return ipAddress;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(prefix);
+        return Objects.hash(macAddress);
     }
 
     @Override
@@ -67,11 +74,12 @@ public final class EvpnInstancePrefix {
 
         EvpnInstancePrefix that = (EvpnInstancePrefix) other;
 
-        return Objects.equals(this.prefix, that.prefix);
+        return Objects.equals(this.macAddress, that.macAddress)
+                && Objects.equals(this.ipAddress, that.ipAddress);
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("prefix", this.prefix).toString();
+        return toStringHelper(this).add("macAddress", this.macAddress).add("ipAddress", this.ipAddress).toString();
     }
 }

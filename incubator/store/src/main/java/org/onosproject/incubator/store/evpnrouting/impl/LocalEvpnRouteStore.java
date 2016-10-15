@@ -95,7 +95,7 @@ public class LocalEvpnRouteStore
         public void update(EvpnRoute route) {
             synchronized (this) {
                 EvpnPrefix prefix = EvpnPrefix
-                        .evpnPrefix(route.routeDistinguisher(), route.prefix());
+                        .evpnPrefix(route.routeDistinguisher(), route.prefixMac(), route.prefixIp());
                 EvpnNextHop nextHop = EvpnNextHop.evpnNextHop(route.nextHop(),
                                                               route.routeTarget(),
                                                               route.label());
@@ -139,7 +139,7 @@ public class LocalEvpnRouteStore
         public void remove(EvpnRoute route) {
             synchronized (this) {
                 EvpnPrefix prefix = EvpnPrefix
-                        .evpnPrefix(route.routeDistinguisher(), route.prefix());
+                        .evpnPrefix(route.routeDistinguisher(), route.prefixMac(), route.prefixIp());
                 EvpnRoute removedRoute = routesMap.remove(prefix);
 
                 if (removedRoute != null) {

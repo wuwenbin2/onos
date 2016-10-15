@@ -45,37 +45,44 @@ public class EvpnRoute {
     }
 
     private final Source source;
-    private final MacAddress prefix;
+    private final MacAddress prefixMac;
+    private final Ip4Address prefixIp;
     private final Ip4Address nextHop;
     private final RouteDistinguisher rd;
     private final RouteTarget rt;
     private final Label label;
 
     // new add
-    public EvpnRoute(Source source, MacAddress prefix, Ip4Address nextHop,
-                     RouteDistinguisher rd, RouteTarget rt, Label label) {
-        checkNotNull(prefix);
+    public EvpnRoute(Source source, MacAddress prefixMac, Ip4Address prefixIp,
+                     Ip4Address nextHop, RouteDistinguisher rd, RouteTarget rt,
+                     Label label) {
+        checkNotNull(prefixMac);
+        checkNotNull(prefixIp);
         checkNotNull(nextHop);
         checkNotNull(rd);
         checkNotNull(rt);
         checkNotNull(label);
         this.source = checkNotNull(source);
-        this.prefix = prefix;
+        this.prefixMac = prefixMac;
+        this.prefixIp = prefixIp;
         this.nextHop = nextHop;
         this.rd = rd;
         this.rt = rt;
         this.label = label;
     }
 
-    public EvpnRoute(Source source, MacAddress prefix, Ip4Address nextHop,
-                     String rdToString, String rtToString, int labelToInt) {
-        checkNotNull(prefix);
+    public EvpnRoute(Source source, MacAddress prefixMac, Ip4Address prefixIp,
+                     Ip4Address nextHop, String rdToString, String rtToString,
+                     int labelToInt) {
+        checkNotNull(prefixMac);
+        checkNotNull(prefixIp);
         checkNotNull(nextHop);
         checkNotNull(rdToString);
         checkNotNull(rtToString);
         checkNotNull(labelToInt);
         this.source = checkNotNull(source);
-        this.prefix = prefix;
+        this.prefixMac = prefixMac;
+        this.prefixIp = prefixIp;
         this.nextHop = nextHop;
         this.rd = RouteDistinguisher.routeDistinguisher(rdToString);
         this.rt = RouteTarget.routeTarget(rtToString);
@@ -96,8 +103,17 @@ public class EvpnRoute {
      *
      * @return IP prefix
      */
-    public MacAddress prefix() {
-        return prefix;
+    public MacAddress prefixMac() {
+        return prefixMac;
+    }
+
+    /**
+     * Returns the IP prefix of the route.
+     *
+     * @return IP prefix
+     */
+    public Ip4Address prefixIp() {
+        return prefixIp;
     }
 
     /**
@@ -123,7 +139,7 @@ public class EvpnRoute {
 
     @Override
     public int hashCode() {
-        return Objects.hash(prefix, nextHop, rd, rt, label);
+        return Objects.hash(prefixMac, prefixIp, nextHop, rd, rt, label);
     }
 
     @Override
@@ -138,7 +154,8 @@ public class EvpnRoute {
 
         EvpnRoute that = (EvpnRoute) other;
 
-        return Objects.equals(prefix, prefix)
+        return Objects.equals(prefixMac, prefixMac)
+                && Objects.equals(prefixIp, that.prefixIp)
                 && Objects.equals(nextHop, that.nextHop)
                 && Objects.equals(this.rd, that.rd)
                 && Objects.equals(this.rt, that.rt)
@@ -147,8 +164,9 @@ public class EvpnRoute {
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("prefix", prefix)
-                .add("nextHop", nextHop).add("rd", this.rd).add("rt", this.rt)
-                .add("label", this.label).toString();
+        return toStringHelper(this).add("prefixMac", prefixMac)
+                .add("prefixIp", prefixIp).add("nextHop", nextHop)
+                .add("rd", this.rd).add("rt", this.rt).add("label", this.label)
+                .toString();
     }
 }
