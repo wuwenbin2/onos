@@ -71,4 +71,6 @@ public interface VpnInstanceService {
      *         successfully.
      */
     boolean removeInstances(Iterable<VpnInstanceId> vpnInstanceIds);
+
+    void initEtcdMonitor(String etcduri);
 }

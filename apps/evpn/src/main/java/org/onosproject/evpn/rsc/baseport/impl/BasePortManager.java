@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -99,8 +97,6 @@ public class BasePortManager implements BasePortService {
     private static final String BASEPORT = "evpn-base-port-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String KEYPATH = "/net-l3vpn/proton/ProtonBasePort";
-    private static final String CONFPATH = "../../etcdMonitor.properties";
-    private static String etcduri = "";
     private static final String VIRTUALPORT_ID_NOT_NULL = "VirtualPort ID cannot be null";
     private static final String VIRTUALPORT_NOT_NULL = "VirtualPort  cannot be null";
     private static final String TENANTID_NOT_NULL = "TenantId  cannot be null";
@@ -152,26 +148,12 @@ public class BasePortManager implements BasePortService {
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
         log.info("Evpn Base port Started");
-        initEtcdMonitor();
     }
 
-    private void initEtcdMonitor() {
-        String ip;
-        String port;
-        Properties prop = new Properties();
-        InputStream in = Object.class.getResourceAsStream(CONFPATH);
-        try {
-            prop.load(in);
-            ip = prop.getProperty("server.ip").trim();
-            port = prop.getProperty("server.port").trim();
-            etcduri = "http://" + ip + ":" + port;
-        } catch (IOException e) {
-            log.debug(e.getMessage());
-        }
-        if (!etcduri.equals("")) {
-            etcdClient = new EtcdClient(URI.create(etcduri));
-            etcdMonitor();
-        }
+    @Override
+    public void initEtcdMonitor(String etcduri) {
+        etcdClient = new EtcdClient(URI.create(etcduri));
+        etcdMonitor(etcduri);
     }
 
     @Deactivate
@@ -330,7 +312,7 @@ public class BasePortManager implements BasePortService {
     /**
      * Start Etcd monitor.
      */
-    public void etcdMonitor() {
+    private void etcdMonitor(String etcduri) {
         executorService.execute(new Runnable() {
             public void run() {
                 try {
@@ -342,7 +324,7 @@ public class BasePortManager implements BasePortService {
                     processEtcdResponse(watchResult);
                     log.info("Etcd monitor data is url {} and value {}",
                              watchResult.node.key, watchResult.node.value);
-                    etcdMonitor();
+                    etcdMonitor(etcduri);
                 } catch (InterruptedException e) {
                     log.debug("Etcd monitor with error {}", e.getMessage());
                 } catch (ExecutionException e) {
