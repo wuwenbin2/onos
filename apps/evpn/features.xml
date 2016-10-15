@@ -22,5 +22,9 @@
         <bundle>mvn:${project.groupId}/onos-app-vtn-web/${project.version}</bundle>
         <bundle>mvn:${project.groupId}/onos-app-vtn-mgr/${project.version}</bundle>
         <bundle>mvn:${project.groupId}/onos-app-evpn/${project.version}</bundle>
+        <bundle>mvn:com.google.code.gson/gson/2.7</bundle>
+        <bundle>mvn:org.apache.httpcomponents/httpclient-osgi/4.4.1</bundle>
+        <bundle>mvn:org.apache.httpcomponents/httpcore-osgi/4.4.4</bundle>
+        <bundle>mvn:org.apache.httpcomponents/httpasyncclient-osgi/4.1.1</bundle>
     </feature>
 </features>

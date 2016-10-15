@@ -56,10 +56,10 @@ public class EtcdMonitorStartCommand extends AbstractShellCommand {
         try {
             if (ipAddress != null) {
                 String url = "http://" + ipAddress + ":2379";
-                service.updateEtcdUrl(url);
+                //service.updateEtcdUrl(url);
             }
             if (start) {
-                service.etcdMonitor();
+                //service.etcdMonitor();
             }
 
             if (query) {
