@@ -298,6 +298,7 @@ public class BasePortManager implements BasePortService {
                     .portId(list[list.length - 1]);
             Set<VirtualPortId> basePortIds = Sets.newHashSet(basePortId);
             removePorts(basePortIds);
+            virtualPortService.removePorts(basePortIds);
         } else {
             ObjectMapper mapper = new ObjectMapper();
             try {
