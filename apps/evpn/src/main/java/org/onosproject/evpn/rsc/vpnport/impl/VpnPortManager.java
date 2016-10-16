@@ -16,18 +16,13 @@
 package org.onosproject.evpn.rsc.vpnport.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -53,9 +48,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.justinsb.etcd.EtcdClient;
-import com.justinsb.etcd.EtcdClientException;
 import com.justinsb.etcd.EtcdResult;
 
 /**
@@ -69,7 +61,6 @@ public class VpnPortManager implements VpnPortService {
 
     private static final String VPNPORT = "evpn-vpn-port-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
-    private static final String KEYPATH = "/net-l3vpn/proton/VPNPort";
     private static final String VPNPORT_ID_NOT_NULL = "VpnPort ID cannot be null";
     private static final String VPNPORT_NOT_NULL = "VpnPort cannot be null";
     private static final String JSON_NOT_NULL = "JsonNode can not be null";
@@ -77,10 +68,6 @@ public class VpnPortManager implements VpnPortService {
 
     protected EventuallyConsistentMap<VpnPortId, VpnPort> vpnPortStore;
     protected ApplicationId appId;
-    private EtcdClient etcdClient;
-    private final ExecutorService executorService = Executors
-            .newFixedThreadPool(5, groupedThreads("EVPN-VpnPort", "executor-%d",
-                                                  log));
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected StorageService storageService;
@@ -100,12 +87,6 @@ public class VpnPortManager implements VpnPortService {
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
         log.info("Evpn Vpn Port Started");
-    }
-
-    @Override
-    public void initEtcdMonitor(String etcduri) {
-            etcdClient = new EtcdClient(URI.create(etcduri));
-            etcdMonitor(etcduri);
     }
 
     @Deactivate
@@ -182,37 +163,8 @@ public class VpnPortManager implements VpnPortService {
         return true;
     }
 
-    /**
-     * Start Etcd monitor.
-     */
-    private void etcdMonitor(String etcduri) {
-        executorService.execute(new Runnable() {
-            public void run() {
-                try {
-                    log.info("Etcd monitor to url {} and keypath {}", etcduri,
-                             KEYPATH);
-                    ListenableFuture<EtcdResult> watchFuture = etcdClient
-                            .watch(KEYPATH, null, true);
-                    EtcdResult watchResult = watchFuture.get();
-                    processEtcdResponse(watchResult);
-                    etcdMonitor(etcduri);
-                } catch (InterruptedException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                } catch (ExecutionException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                } catch (EtcdClientException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                }
-            }
-        });
-    }
-
-    /**
-     * process Etcd response.
-     *
-     * @param response Etcd response
-     */
-    private void processEtcdResponse(EtcdResult response) {
+    @Override
+    public void processEtcdResponse(EtcdResult response) {
         checkNotNull(response, RESPONSE_NOT_NULL);
         if (response.action.equals("delete")) {
             String[] list = response.node.key.split("/");

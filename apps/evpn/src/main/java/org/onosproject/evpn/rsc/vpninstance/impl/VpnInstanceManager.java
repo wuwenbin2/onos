@@ -16,18 +16,13 @@
 package org.onosproject.evpn.rsc.vpninstance.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -64,9 +59,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.justinsb.etcd.EtcdClient;
-import com.justinsb.etcd.EtcdClientException;
 import com.justinsb.etcd.EtcdResult;
 
 /**
@@ -80,7 +72,6 @@ public class VpnInstanceManager implements VpnInstanceService {
 
     private static final String VPNINSTANCE = "evpn-vpn-instance-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
-    private static final String KEYPATH = "/net-l3vpn/proton/VpnInstance";
     private static final String VPNINSTANCE_ID_NOT_NULL = "VpnInstance ID cannot be null";
     private static final String VPNINSTANCE_NOT_NULL = "VpnInstance cannot be null";
     private static final String JSON_NOT_NULL = "JsonNode can not be null";
@@ -88,10 +79,6 @@ public class VpnInstanceManager implements VpnInstanceService {
 
     protected EventuallyConsistentMap<VpnInstanceId, VpnInstance> vpnInstanceStore;
     protected ApplicationId appId;
-    private EtcdClient etcdClient;
-    private final ExecutorService executorService = Executors
-            .newFixedThreadPool(5, groupedThreads("EVPN-VpnInstance",
-                                                  "executor-%d", log));
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected StorageService storageService;
@@ -114,12 +101,6 @@ public class VpnInstanceManager implements VpnInstanceService {
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
         log.info("Evpn Vpn Instance Started");
-    }
-
-    @Override
-    public void initEtcdMonitor(String etcduri) {
-        etcdClient = new EtcdClient(URI.create(etcduri));
-        etcdMonitor(etcduri);
     }
 
     @Deactivate
@@ -197,37 +178,8 @@ public class VpnInstanceManager implements VpnInstanceService {
         return true;
     }
 
-    /**
-     * Start Etcd monitor.
-     */
-    private void etcdMonitor(String etcduri) {
-        executorService.execute(new Runnable() {
-            public void run() {
-                try {
-                    log.info("Etcd monitor to url {} and keypath {}", etcduri,
-                             KEYPATH);
-                    ListenableFuture<EtcdResult> watchFuture = etcdClient
-                            .watch(KEYPATH, null, true);
-                    EtcdResult watchResult = watchFuture.get();
-                    processEtcdResponse(watchResult);
-                    etcdMonitor(etcduri);
-                } catch (InterruptedException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                } catch (ExecutionException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                } catch (EtcdClientException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                }
-            }
-        });
-    }
-
-    /**
-     * process Etcd response.
-     *
-     * @param response Etcd response
-     */
-    private void processEtcdResponse(EtcdResult response) {
+    @Override
+    public void processEtcdResponse(EtcdResult response) {
         checkNotNull(response, RESPONSE_NOT_NULL);
         if (response.action.equals("delete")) {
             String[] list = response.node.key.split("/");

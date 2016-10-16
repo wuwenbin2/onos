@@ -21,6 +21,8 @@ import java.util.Collection;
 import org.onosproject.evpn.rsc.VpnInstance;
 import org.onosproject.evpn.rsc.VpnInstanceId;
 
+import com.justinsb.etcd.EtcdResult;
+
 /**
  * Service for interacting with the inventory of VPN instance.
  */
@@ -72,5 +74,10 @@ public interface VpnInstanceService {
      */
     boolean removeInstances(Iterable<VpnInstanceId> vpnInstanceIds);
 
-    void initEtcdMonitor(String etcduri);
+    /**
+     * process Etcd response.
+     *
+     * @param response Etcd response
+     */
+    void processEtcdResponse(EtcdResult response);
 }
