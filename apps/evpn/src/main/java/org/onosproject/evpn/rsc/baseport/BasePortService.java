@@ -27,6 +27,8 @@ import org.onosproject.vtnrsc.TenantNetworkId;
 import org.onosproject.vtnrsc.VirtualPort;
 import org.onosproject.vtnrsc.VirtualPortId;
 
+import com.justinsb.etcd.EtcdResult;
+
 /**
  * Service for interacting with the inventory of base port.
  */
@@ -128,5 +130,10 @@ public interface BasePortService {
      */
     boolean removePorts(Iterable<VirtualPortId> virtualPortIds);
 
-    void initEtcdMonitor(String etcduri);
+    /**
+     * process Etcd response.
+     *
+     * @param response Etcd response
+     */
+    void processEtcdResponse(EtcdResult response);
 }

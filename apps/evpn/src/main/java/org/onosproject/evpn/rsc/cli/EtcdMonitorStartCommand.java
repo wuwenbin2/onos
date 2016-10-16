@@ -20,6 +20,7 @@ import java.util.Collection;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.onosproject.cli.AbstractShellCommand;
+import org.onosproject.evpn.rsc.EtcdMonitor;
 import org.onosproject.evpn.rsc.VpnInstance;
 import org.onosproject.evpn.rsc.VpnPort;
 import org.onosproject.evpn.rsc.baseport.BasePortService;
@@ -30,7 +31,7 @@ import org.onosproject.vtnrsc.VirtualPort;
 /**
  * Supports for create a floating IP.
  */
-@Command(scope = "onos", name = "etcd-baseport-monitor", description = "Supports for start etcd monitor")
+@Command(scope = "onos", name = "etcd-monitor", description = "Supports for start etcd monitor")
 public class EtcdMonitorStartCommand extends AbstractShellCommand {
 
     @Option(name = "-i", aliases = "--ip", description = "Etcd server ip address",
@@ -59,16 +60,8 @@ public class EtcdMonitorStartCommand extends AbstractShellCommand {
         try {
             if (ipAddress != null) {
                 String url = "http://" + ipAddress + ":2379";
-                if (target.equals("baseport")) {
-                    BasePortService service = get(BasePortService.class);
-                    service.initEtcdMonitor(url);
-                } else if (target.equals("vpninstance")) {
-                    VpnInstanceService service = get(VpnInstanceService.class);
-                    service.initEtcdMonitor(url);
-                } else if (target.equals("vpnport")) {
-                    VpnPortService service = get(VpnPortService.class);
-                    service.initEtcdMonitor(url);
-                }
+                EtcdMonitor etcdMonitor = new EtcdMonitor(url);
+                etcdMonitor.etcdMonitor();
             }
             if (query != null) {
                 if (target.equals("baseport")) {

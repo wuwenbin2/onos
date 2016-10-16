@@ -17,10 +17,8 @@
 package org.onosproject.evpn.rsc.baseport.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.onlab.util.Tools.groupedThreads;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,9 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -70,20 +65,16 @@ import org.onosproject.vtnrsc.TenantNetwork;
 import org.onosproject.vtnrsc.TenantNetworkId;
 import org.onosproject.vtnrsc.TenantRouter;
 import org.onosproject.vtnrsc.VirtualPort;
+import org.onosproject.vtnrsc.VirtualPort.State;
 import org.onosproject.vtnrsc.VirtualPortId;
 import org.onosproject.vtnrsc.virtualport.VirtualPortService;
-import org.onosproject.vtnrsc.VirtualPort.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.ListenableFuture;
-import com.justinsb.etcd.EtcdClient;
-import com.justinsb.etcd.EtcdClientException;
-import com.justinsb.etcd.EtcdResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
+import com.justinsb.etcd.EtcdResult;
 
 /**
  * Provides implementation of the BasePort APIs.
@@ -96,7 +87,6 @@ public class BasePortManager implements BasePortService {
 
     private static final String BASEPORT = "evpn-base-port-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
-    private static final String KEYPATH = "/net-l3vpn/proton/ProtonBasePort";
     private static final String VIRTUALPORT_ID_NOT_NULL = "VirtualPort ID cannot be null";
     private static final String VIRTUALPORT_NOT_NULL = "VirtualPort  cannot be null";
     private static final String TENANTID_NOT_NULL = "TenantId  cannot be null";
@@ -110,10 +100,6 @@ public class BasePortManager implements BasePortService {
 
     protected EventuallyConsistentMap<VirtualPortId, VirtualPort> basePortStore;
     protected ApplicationId appId;
-    private EtcdClient etcdClient;
-    private final ExecutorService executorService = Executors
-            .newFixedThreadPool(5, groupedThreads("EVPN-BasePort",
-                                                  "executor-%d", log));
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected StorageService storageService;
@@ -148,12 +134,6 @@ public class BasePortManager implements BasePortService {
                 .withTimestampProvider((k, v) -> new WallClockTimestamp())
                 .build();
         log.info("Evpn Base port Started");
-    }
-
-    @Override
-    public void initEtcdMonitor(String etcduri) {
-        etcdClient = new EtcdClient(URI.create(etcduri));
-        etcdMonitor(etcduri);
     }
 
     @Deactivate
@@ -309,39 +289,8 @@ public class BasePortManager implements BasePortService {
         return true;
     }
 
-    /**
-     * Start Etcd monitor.
-     */
-    private void etcdMonitor(String etcduri) {
-        executorService.execute(new Runnable() {
-            public void run() {
-                try {
-                    log.info("Etcd monitor to url {} and keypath {}", etcduri,
-                             KEYPATH);
-                    ListenableFuture<EtcdResult> watchFuture = etcdClient
-                            .watch(KEYPATH, null, true);
-                    EtcdResult watchResult = watchFuture.get();
-                    processEtcdResponse(watchResult);
-                    log.info("Etcd monitor data is url {} and value {}",
-                             watchResult.node.key, watchResult.node.value);
-                    etcdMonitor(etcduri);
-                } catch (InterruptedException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                } catch (ExecutionException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                } catch (EtcdClientException e) {
-                    log.debug("Etcd monitor with error {}", e.getMessage());
-                }
-            }
-        });
-    }
-
-    /**
-     * process Etcd response.
-     *
-     * @param response Etcd response
-     */
-    private void processEtcdResponse(EtcdResult response) {
+    @Override
+    public void processEtcdResponse(EtcdResult response) {
         checkNotNull(response, RESPONSE_NOT_NULL);
         if (response.action.equals("delete")) {
             String[] list = response.node.key.split("/");
