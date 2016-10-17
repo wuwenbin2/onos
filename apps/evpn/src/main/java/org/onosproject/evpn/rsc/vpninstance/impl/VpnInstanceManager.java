@@ -145,15 +145,12 @@ public class VpnInstanceManager implements VpnInstanceService {
     public boolean updateInstances(Iterable<VpnInstance> vpnInstances) {
         checkNotNull(vpnInstances, VPNINSTANCE_NOT_NULL);
         for (VpnInstance vpnInstance : vpnInstances) {
-            vpnInstanceStore.put(vpnInstance.id(), vpnInstance);
             if (!vpnInstanceStore.containsKey(vpnInstance.id())) {
                 log.debug("The vpnInstance is not exist whose identifier is {}",
                           vpnInstance.id().toString());
                 return false;
             }
-
             vpnInstanceStore.put(vpnInstance.id(), vpnInstance);
-
             if (!vpnInstance.equals(vpnInstanceStore.get(vpnInstance.id()))) {
                 log.debug("The vpnInstance is updated failed whose  identifier is {}",
                           vpnInstance.id().toString());

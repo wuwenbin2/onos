@@ -257,15 +257,12 @@ public class BasePortManager implements BasePortService {
     public boolean updatePorts(Iterable<VirtualPort> vPorts) {
         checkNotNull(vPorts, VIRTUALPORT_NOT_NULL);
         for (VirtualPort vPort : vPorts) {
-            basePortStore.put(vPort.portId(), vPort);
             if (!basePortStore.containsKey(vPort.portId())) {
                 log.debug("The virtualPort is not exist whose identifier is {}",
                           vPort.portId().toString());
                 return false;
             }
-
             basePortStore.put(vPort.portId(), vPort);
-
             if (!vPort.equals(basePortStore.get(vPort.portId()))) {
                 log.debug("The virtualPort is updated failed whose  identifier is {}",
                           vPort.portId().toString());
