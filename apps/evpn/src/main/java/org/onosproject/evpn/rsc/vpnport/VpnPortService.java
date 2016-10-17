@@ -80,4 +80,18 @@ public interface VpnPortService {
      * @param response Etcd response
      */
     void processEtcdResponse(EtcdResult response);
+
+    /**
+     * Adds the specified listener to Vpn Port manager.
+     *
+     * @param listener Vpn Port listener
+     */
+    void addListener(VpnPortListener listener);
+
+    /**
+     * Removes the specified listener to Vpn Port manager.
+     *
+     * @param listener Vpn Port listener
+     */
+    void removeListener(VpnPortListener listener);
 }

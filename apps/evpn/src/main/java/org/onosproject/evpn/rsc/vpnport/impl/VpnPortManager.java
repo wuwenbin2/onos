@@ -37,6 +37,8 @@ import org.onosproject.evpn.rsc.DefaultVpnPort;
 import org.onosproject.evpn.rsc.VpnInstanceId;
 import org.onosproject.evpn.rsc.VpnPort;
 import org.onosproject.evpn.rsc.VpnPortId;
+import org.onosproject.evpn.rsc.vpnport.VpnPortEvent;
+import org.onosproject.evpn.rsc.vpnport.VpnPortListener;
 import org.onosproject.evpn.rsc.vpnport.VpnPortService;
 import org.onosproject.store.serializers.KryoNamespaces;
 import org.onosproject.store.service.EventuallyConsistentMap;
@@ -58,13 +60,16 @@ import com.justinsb.etcd.EtcdResult;
 public class VpnPortManager implements VpnPortService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
-
+    private final Set<VpnPortListener> listeners = Sets
+            .newCopyOnWriteArraySet();
     private static final String VPNPORT = "evpn-vpn-port-store";
     private static final String EVPN_APP = "org.onosproject.evpn";
     private static final String VPNPORT_ID_NOT_NULL = "VpnPort ID cannot be null";
     private static final String VPNPORT_NOT_NULL = "VpnPort cannot be null";
     private static final String JSON_NOT_NULL = "JsonNode can not be null";
     private static final String RESPONSE_NOT_NULL = "JsonNode can not be null";
+    private static final String LISTENER_NOT_NULL = "Listener cannot be null";
+    private static final String EVENT_NOT_NULL = "event cannot be null";
 
     protected EventuallyConsistentMap<VpnPortId, VpnPort> vpnPortStore;
     protected ApplicationId appId;
@@ -123,6 +128,7 @@ public class VpnPortManager implements VpnPortService {
                           vpnPort.id().toString());
                 return false;
             }
+            notifyListeners(new VpnPortEvent(VpnPortEvent.Type.VPNPORT_SET, vpnPort));
         }
         return true;
     }
@@ -131,20 +137,18 @@ public class VpnPortManager implements VpnPortService {
     public boolean updatePorts(Iterable<VpnPort> vpnPorts) {
         checkNotNull(vpnPorts, VPNPORT_NOT_NULL);
         for (VpnPort vpnPort : vpnPorts) {
-            vpnPortStore.put(vpnPort.id(), vpnPort);
             if (!vpnPortStore.containsKey(vpnPort.id())) {
                 log.debug("The vpnPort is not exist whose identifier is {}",
                           vpnPort.id().toString());
                 return false;
             }
-
             vpnPortStore.put(vpnPort.id(), vpnPort);
-
             if (!vpnPort.equals(vpnPortStore.get(vpnPort.id()))) {
                 log.debug("The vpnPort is updated failed whose  identifier is {}",
                           vpnPort.id().toString());
                 return false;
             }
+            notifyListeners(new VpnPortEvent(VpnPortEvent.Type.VPNPORT_UPDATE, vpnPort));
         }
         return true;
     }
@@ -153,12 +157,14 @@ public class VpnPortManager implements VpnPortService {
     public boolean removePorts(Iterable<VpnPortId> vpnPortIds) {
         checkNotNull(vpnPortIds, VPNPORT_NOT_NULL);
         for (VpnPortId vpnPortid : vpnPortIds) {
+            VpnPort vpnPort = vpnPortStore.get(vpnPortid);
             vpnPortStore.remove(vpnPortid);
             if (vpnPortStore.containsKey(vpnPortid)) {
                 log.debug("The vpnPort is removed failed whose identifier is {}",
                           vpnPortid.toString());
                 return false;
             }
+            notifyListeners(new VpnPortEvent(VpnPortEvent.Type.VPNPORT_DELETE, vpnPort));
         }
         return true;
     }
@@ -199,5 +205,27 @@ public class VpnPortManager implements VpnPortService {
         vpnPortMap.put(id, vpnPort);
 
         return Collections.unmodifiableCollection(vpnPortMap.values());
+    }
+
+    @Override
+    public void addListener(VpnPortListener listener) {
+        checkNotNull(listener, LISTENER_NOT_NULL);
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(VpnPortListener listener) {
+        checkNotNull(listener, LISTENER_NOT_NULL);
+        listeners.add(listener);
+    }
+
+    /**
+     * Notifies specify event to all listeners.
+     *
+     * @param event Vpn Port event
+     */
+    private void notifyListeners(VpnPortEvent event) {
+        checkNotNull(event, EVENT_NOT_NULL);
+        listeners.forEach(listener -> listener.event(event));
     }
 }
