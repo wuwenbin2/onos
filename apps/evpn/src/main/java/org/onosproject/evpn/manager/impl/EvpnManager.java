@@ -42,6 +42,7 @@ import org.onosproject.evpn.rsc.VpnInstance;
 import org.onosproject.evpn.rsc.VpnInstanceId;
 import org.onosproject.evpn.rsc.VpnPort;
 import org.onosproject.evpn.rsc.VpnPortId;
+import org.onosproject.evpn.rsc.baseport.BasePortService;
 import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
 import org.onosproject.evpn.rsc.vpnport.VpnPortService;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstance;
@@ -92,6 +93,7 @@ import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
 import org.onosproject.vtn.util.VtnData;
 import org.onosproject.vtnrsc.VirtualPort;
+import org.onosproject.vtnrsc.VirtualPortId;
 import org.onosproject.vtnrsc.virtualport.VirtualPortService;
 import org.slf4j.Logger;
 
@@ -150,6 +152,9 @@ public class EvpnManager implements EvpnService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected VirtualPortService virtualPortService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected BasePortService basePortService;
 
     private final HostListener hostListener = new InnerHostListener();
     private final EvpnRouteListener routeListener = new InnerRouteListener();
@@ -647,5 +652,33 @@ public class EvpnManager implements EvpnService {
                 onBgpEvpnRouteDelete(route);
             }
         }
+    }
+
+    private void onVpnPortDelete(VpnPort vpnPort){
+        //delete the flows of this vpn
+        VpnPortId vpnPortId = vpnPort.id();
+        VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
+        if (!vpnInstanceService.exists(vpnInstanceId)) {
+            log.error("Vpn Instance {} is not exist", vpnInstanceId);
+            return ;
+        }
+        VpnInstance instance = vpnInstanceService.getInstance(vpnInstanceId);
+        RouteTarget rt = instance.routeTarget();
+        hostService.getHosts().forEach(host -> {
+            if(vpnPortId.equals(host.annotations().value("ifaceid"))) {
+                DeviceId deviceId = host.location().deviceId();
+                Device device = deviceService.getDevice(deviceId);
+                Collection<EvpnRoute> routes = routeService.getAllRoutes();
+                for (EvpnRoute route : routes) {
+                    Set<Host> macs = hostService.getHostsByMac(route.prefixMac());
+                    if (!macs.isEmpty() || !rt.equals(route.routeTarget())) {
+                        continue;
+                    }
+                    ForwardingObjective.Builder build = getMplsOutBuilder(device, route,
+                                                                          host);
+                    flowObjectiveService.forward(deviceId, build.remove());
+                }
+            }
+        });
     }
 }
