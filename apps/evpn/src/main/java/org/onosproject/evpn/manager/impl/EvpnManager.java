@@ -433,7 +433,7 @@ public class EvpnManager implements EvpnService {
                                             Ip4Address.valueOf(ipAddress
                                                                .toString()), rd, rt, privatelabel);
         routeAdminService.updateEvpnRoute(Sets.newHashSet(evpnRoute));
-        routeAdminService.sendEvpnMessage(evpnRoute);
+        routeAdminService.sendEvpnMessage(EvpnRoute.OperationType.UPDATE, evpnRoute);
         // download flows
         ForwardingObjective.Builder objective = getMplsInBuilder(device, host,
                                                                  privatelabel);
@@ -586,6 +586,7 @@ public class EvpnManager implements EvpnService {
         ForwardingObjective.Builder objective = getMplsInBuilder(device, host,
                                                                  label);
         flowObjectiveService.forward(device.id(), objective.remove());
+        routeAdminService.sendEvpnMessage(EvpnRoute.OperationType.REMOVE, evpnRoute);
         // download remote flows
         Collection<EvpnRoute> routes = routeService.getAllRoutes();
         for (EvpnRoute route : routes) {

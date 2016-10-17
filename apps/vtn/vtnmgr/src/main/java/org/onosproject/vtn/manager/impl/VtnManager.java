@@ -324,11 +324,11 @@ public class VtnManager implements VtnService {
 //                .withTimestampProvider((k, v) -> clockService.getTimestamp())
 //                .build();
         hostsOfSubnet = new HashMap<SubnetId, Map<HostId, Host>>();
-//                storageService
-//                .<SubnetId, Map<HostId, Host>>eventuallyConsistentMapBuilder()
-//                .withName(HOSTS_OF_SUBNET).withSerializer(serializer)
-//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-//                .build();                
+//         storageService
+//         .<SubnetId, Map<HostId, Host>>eventuallyConsistentMapBuilder()
+//         .withName(HOSTS_OF_SUBNET).withSerializer(serializer)
+//         .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//         .build();
 
         routerInfFlagOfTenantRouter = new HashMap<TenantRouter, Boolean>();
 //                storageService
@@ -471,7 +471,7 @@ public class VtnManager implements VtnService {
             log.error("The ifaceId of Host is null");
             return;
         }
-        programSffAndClassifierHost(host, Objective.Operation.ADD);
+//        programSffAndClassifierHost(host, Objective.Operation.ADD);
         // apply L2 openflow rules
         applyHostMonitoredL2Rules(host, Objective.Operation.ADD);
         // apply L3 openflow rules

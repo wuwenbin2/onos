@@ -37,6 +37,12 @@ public interface EvpnRouteAdminService extends EvpnRouteService {
      */
     void withdrawEvpnRoute(Collection<EvpnRoute> routes);
 
-    void sendEvpnMessage(EvpnRoute evpnRoute);
+    /**
+     * Send route update/remove to peer.
+     *
+     * @param type route operation
+     * @param evpnRoute evpn route
+     */
+    void sendEvpnMessage(EvpnRoute.OperationType type, EvpnRoute evpnRoute);
 
 }

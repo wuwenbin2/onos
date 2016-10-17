@@ -27,7 +27,6 @@ import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.Port;
 import org.onosproject.net.PortNumber;
-import org.onosproject.store.service.EventuallyConsistentMap;
 import org.onosproject.vtnrsc.FixedIp;
 import org.onosproject.vtnrsc.TenantNetworkId;
 import org.onosproject.vtnrsc.VirtualPort;

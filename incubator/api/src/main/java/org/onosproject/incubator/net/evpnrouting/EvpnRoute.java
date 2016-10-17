@@ -30,6 +30,20 @@ import org.onlab.packet.MacAddress;
 public class EvpnRoute {
 
     /**
+     * operation of the evpn route.
+     */
+    public enum OperationType {
+        /**
+         * Update.
+         */
+        UPDATE,
+        /**
+         * Remove.
+         */
+        REMOVE,
+    }
+
+    /**
      * Source of the route.
      */
     public enum Source {
@@ -58,7 +72,6 @@ public class EvpnRoute {
                      Label label) {
         checkNotNull(prefixMac);
         checkNotNull(prefixIp);
-        checkNotNull(nextHop);
         checkNotNull(rd);
         checkNotNull(rt);
         checkNotNull(label);
@@ -76,7 +89,6 @@ public class EvpnRoute {
                      int labelToInt) {
         checkNotNull(prefixMac);
         checkNotNull(prefixIp);
-        checkNotNull(nextHop);
         checkNotNull(rdToString);
         checkNotNull(rtToString);
         checkNotNull(labelToInt);
