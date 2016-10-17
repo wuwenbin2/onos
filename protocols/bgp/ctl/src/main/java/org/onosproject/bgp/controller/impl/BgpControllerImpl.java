@@ -163,7 +163,7 @@ public class BgpControllerImpl implements BgpController {
 
             if (isEvpn) {
                 for (BgpRouteListener listener : bgpRouteListener) {
-                    listener.addRoute(bgpId, updateMsg);
+                    listener.processRoute(bgpId, updateMsg);
                 }
             }
             break;

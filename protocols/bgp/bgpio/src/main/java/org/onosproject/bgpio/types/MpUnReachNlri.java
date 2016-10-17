@@ -42,7 +42,8 @@ import com.google.common.base.MoreObjects;
  */
 public class MpUnReachNlri implements BgpValueType {
 
-    private static final Logger log = LoggerFactory.getLogger(MpUnReachNlri.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(MpUnReachNlri.class);
     public static final byte MPUNREACHNLRI_TYPE = 15;
     public static final byte LINK_NLRITYPE = 2;
     public static final byte FLAGS = (byte) 0x90;
@@ -57,13 +58,13 @@ public class MpUnReachNlri implements BgpValueType {
     /**
      * Constructor to initialize parameters.
      *
-     * @param mpUnReachNlri MpUnReach  Nlri attribute
+     * @param mpUnReachNlri MpUnReach Nlri attribute
      * @param afi address family identifier
      * @param safi subsequent address family identifier
      * @param length of MpUnReachNlri
      */
     public MpUnReachNlri(List<BgpLSNlri> mpUnReachNlri, short afi, byte safi,
-                  int length) {
+                         int length) {
         this.bgpLSNlri = mpUnReachNlri;
         this.isMpUnReachNlri = true;
         this.afi = afi;
@@ -71,7 +72,8 @@ public class MpUnReachNlri implements BgpValueType {
         this.length = length;
     }
 
-    public MpUnReachNlri(BgpFlowSpecNlri bgpFlowSpecNlri, short afi, byte safi) {
+    public MpUnReachNlri(BgpFlowSpecNlri bgpFlowSpecNlri, short afi,
+                         byte safi) {
         this.isMpUnReachNlri = true;
         this.length = 0;
         this.bgpFlowSpecNlri = bgpFlowSpecNlri;
@@ -86,7 +88,6 @@ public class MpUnReachNlri implements BgpValueType {
         this.afi = afi;
         this.safi = safi;
     }
-
 
     /**
      * Returns list of Link State Nlri.
@@ -167,22 +168,28 @@ public class MpUnReachNlri implements BgpValueType {
      * @return object of MpUnReachNlri
      * @throws BgpParseException while parsing MpUnReachNlri
      */
-    public static MpUnReachNlri read(ChannelBuffer cb) throws BgpParseException {
+    public static MpUnReachNlri read(ChannelBuffer cb)
+            throws BgpParseException {
         ChannelBuffer tempBuf = cb.copy();
         Validation parseFlags = Validation.parseAttributeHeader(cb);
-        int len = parseFlags.isShort() ? parseFlags.getLength() + Constants.TYPE_AND_LEN_AS_SHORT
-                                      : parseFlags.getLength() + Constants.TYPE_AND_LEN_AS_BYTE;
+        int len = parseFlags.isShort()
+                                       ? parseFlags.getLength()
+                                               + Constants.TYPE_AND_LEN_AS_SHORT
+                                       : parseFlags.getLength()
+                                               + Constants.TYPE_AND_LEN_AS_BYTE;
         ChannelBuffer data = tempBuf.readBytes(len);
 
         if (!parseFlags.getFirstBit() && parseFlags.getSecondBit()
                 && parseFlags.getThirdBit()) {
             throw new BgpParseException(BgpErrorType.UPDATE_MESSAGE_ERROR,
-                                        BgpErrorType.ATTRIBUTE_FLAGS_ERROR, data);
+                                        BgpErrorType.ATTRIBUTE_FLAGS_ERROR,
+                                        data);
         }
 
         if (cb.readableBytes() < parseFlags.getLength()) {
             Validation.validateLen(BgpErrorType.UPDATE_MESSAGE_ERROR,
-                                   BgpErrorType.ATTRIBUTE_LENGTH_ERROR, parseFlags.getLength());
+                                   BgpErrorType.ATTRIBUTE_LENGTH_ERROR,
+                                   parseFlags.getLength());
         }
 
         LinkedList<BgpLSNlri> mpUnReachNlri = new LinkedList<>();
@@ -194,16 +201,18 @@ public class MpUnReachNlri implements BgpValueType {
             afi = tempCb.readShort();
             safi = tempCb.readByte();
 
-            //Supporting only for AFI 16388 / SAFI 71
+            // Supporting only for AFI 16388 / SAFI 71
             if ((afi == Constants.AFI_VALUE) && (safi == Constants.SAFI_VALUE)
-                    || (afi == Constants.AFI_VALUE) && (safi == Constants.VPN_SAFI_VALUE)) {
+                    || (afi == Constants.AFI_VALUE)
+                            && (safi == Constants.VPN_SAFI_VALUE)) {
                 while (tempCb.readableBytes() > 0) {
                     short nlriType = tempCb.readShort();
                     short totNlriLen = tempCb.readShort();
                     if (tempCb.readableBytes() < totNlriLen) {
                         Validation.validateLen(
-                                BgpErrorType.UPDATE_MESSAGE_ERROR,
-                                BgpErrorType.ATTRIBUTE_LENGTH_ERROR, totNlriLen);
+                                               BgpErrorType.UPDATE_MESSAGE_ERROR,
+                                               BgpErrorType.ATTRIBUTE_LENGTH_ERROR,
+                                               totNlriLen);
                     }
                     tempBuf = tempCb.readBytes(totNlriLen);
                     switch (nlriType) {
@@ -224,8 +233,8 @@ public class MpUnReachNlri implements BgpValueType {
                     mpUnReachNlri.add(bgpLSNlri);
                 }
             } else if ((afi == Constants.AFI_FLOWSPEC_VALUE)
-                                               && ((safi == Constants.SAFI_FLOWSPEC_VALUE)
-                                               || (safi == Constants.VPN_SAFI_FLOWSPEC_VALUE))) {
+                    && ((safi == Constants.SAFI_FLOWSPEC_VALUE)
+                            || (safi == Constants.VPN_SAFI_FLOWSPEC_VALUE))) {
                 List<BgpValueType> flowSpecComponents = new LinkedList<>();
                 RouteDistinguisher routeDistinguisher = null;
                 if (tempCb.readableBytes() > 0) {
@@ -238,39 +247,48 @@ public class MpUnReachNlri implements BgpValueType {
                     while (tempCb.readableBytes() > 0) {
                         short totNlriLen = tempCb.getByte(tempCb.readerIndex());
                         if (totNlriLen >= BgpFlowSpecNlri.FLOW_SPEC_LEN) {
-                           if (tempCb.readableBytes() < 2) {
-                                Validation.validateLen(BgpErrorType.UPDATE_MESSAGE_ERROR,
-                                    BgpErrorType.ATTRIBUTE_LENGTH_ERROR, totNlriLen);
+                            if (tempCb.readableBytes() < 2) {
+                                Validation.validateLen(
+                                                       BgpErrorType.UPDATE_MESSAGE_ERROR,
+                                                       BgpErrorType.ATTRIBUTE_LENGTH_ERROR,
+                                                       totNlriLen);
                             }
                             totNlriLen = tempCb.readShort();
                         } else {
                             totNlriLen = tempCb.readByte();
                         }
                         if (tempCb.readableBytes() < totNlriLen) {
-                            Validation.validateLen(BgpErrorType.UPDATE_MESSAGE_ERROR,
-                                    BgpErrorType.ATTRIBUTE_LENGTH_ERROR, totNlriLen);
+                            Validation.validateLen(
+                                                   BgpErrorType.UPDATE_MESSAGE_ERROR,
+                                                   BgpErrorType.ATTRIBUTE_LENGTH_ERROR,
+                                                   totNlriLen);
                         }
                         tempBuf = tempCb.readBytes(totNlriLen);
                         while (tempBuf.readableBytes() > 0) {
                             short type = tempBuf.readByte();
                             switch (type) {
                             case Constants.BGP_FLOWSPEC_DST_PREFIX:
-                                flowSpecComponent = BgpFsDestinationPrefix.read(tempBuf);
+                                flowSpecComponent = BgpFsDestinationPrefix
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_SRC_PREFIX:
-                                flowSpecComponent = BgpFsSourcePrefix.read(tempBuf);
+                                flowSpecComponent = BgpFsSourcePrefix
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_IP_PROTO:
-                                flowSpecComponent = BgpFsIpProtocol.read(tempBuf);
+                                flowSpecComponent = BgpFsIpProtocol
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_PORT:
                                 flowSpecComponent = BgpFsPortNum.read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_DST_PORT:
-                                flowSpecComponent = BgpFsDestinationPortNum.read(tempBuf);
+                                flowSpecComponent = BgpFsDestinationPortNum
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_SRC_PORT:
-                                flowSpecComponent = BgpFsSourcePortNum.read(tempBuf);
+                                flowSpecComponent = BgpFsSourcePortNum
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_ICMP_TP:
                                 flowSpecComponent = BgpFsIcmpType.read(tempBuf);
@@ -282,16 +300,19 @@ public class MpUnReachNlri implements BgpValueType {
                                 flowSpecComponent = BgpFsTcpFlags.read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_PCK_LEN:
-                                flowSpecComponent = BgpFsPacketLength.read(tempBuf);
+                                flowSpecComponent = BgpFsPacketLength
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_DSCP:
-                                flowSpecComponent = BgpFsDscpValue.read(tempBuf);
+                                flowSpecComponent = BgpFsDscpValue
+                                        .read(tempBuf);
                                 break;
                             case Constants.BGP_FLOWSPEC_FRAGMENT:
                                 flowSpecComponent = BgpFsFragment.read(tempBuf);
                                 break;
                             default:
-                                log.debug("flow spec type not supported" + type);
+                                log.debug("flow spec type not supported"
+                                        + type);
                                 break;
                             }
                             flowSpecComponents.add(flowSpecComponent);
@@ -304,16 +325,17 @@ public class MpUnReachNlri implements BgpValueType {
             } else if ((afi == Constants.AFI_EVPN_VALUE)
                     && (safi == Constants.SAFI_EVPN_VALUE)) {
                 List<BgpEvpnNlri> eVpnComponents = new LinkedList<>();
-
                 while (tempCb.readableBytes() > 0) {
                     BgpEvpnNlri eVpnComponent = BgpEvpnNlriVer4.read(tempCb);
                     eVpnComponents.add(eVpnComponent);
+                    log.info("=====evpn Component is {} ======", eVpnComponent);
                 }
 
                 return new MpUnReachNlri(eVpnComponents, afi, safi);
             } else {
-                //TODO: check with the values got from capability
-                throw new BgpParseException("Not Supporting afi " + afi + "safi " + safi);
+                // TODO: check with the values got from capability
+                throw new BgpParseException("Not Supporting afi " + afi
+                        + "safi " + safi);
             }
         }
         return new MpUnReachNlri(mpUnReachNlri, afi, safi,
@@ -373,8 +395,9 @@ public class MpUnReachNlri implements BgpValueType {
     @Override
     public int write(ChannelBuffer cb) {
         int iLenStartIndex = cb.writerIndex();
-        if ((afi == Constants.AFI_FLOWSPEC_VALUE) && ((safi == Constants.SAFI_FLOWSPEC_VALUE) ||
-            (safi == Constants.VPN_SAFI_FLOWSPEC_VALUE))) {
+        if ((afi == Constants.AFI_FLOWSPEC_VALUE)
+                && ((safi == Constants.SAFI_FLOWSPEC_VALUE)
+                        || (safi == Constants.VPN_SAFI_FLOWSPEC_VALUE))) {
             List<BgpValueType> flowSpec = bgpFlowSpecNlri.flowSpecComponents();
             ListIterator<BgpValueType> listIterator = flowSpec.listIterator();
             boolean isAllFlowTypesIdentical = true;
@@ -387,7 +410,8 @@ public class MpUnReachNlri implements BgpValueType {
             cb.writeByte(safi);
 
             if (bgpFlowSpecNlri.routeDistinguisher() != null) {
-                cb.writeLong(bgpFlowSpecNlri.routeDistinguisher().getRouteDistinguisher());
+                cb.writeLong(bgpFlowSpecNlri.routeDistinguisher()
+                        .getRouteDistinguisher());
             }
 
             BgpValueType tlv1 = null;
@@ -403,9 +427,12 @@ public class MpUnReachNlri implements BgpValueType {
             }
 
             if (isAllFlowTypesIdentical) {
-                BgpFlowSpecNlri.updateBufferIdenticalFlowTypes(cb, bgpFlowSpecNlri());
+                BgpFlowSpecNlri
+                        .updateBufferIdenticalFlowTypes(cb, bgpFlowSpecNlri());
             } else {
-                BgpFlowSpecNlri.updateBufferNonIdenticalFlowTypes(cb, bgpFlowSpecNlri());
+                BgpFlowSpecNlri
+                        .updateBufferNonIdenticalFlowTypes(cb,
+                                                           bgpFlowSpecNlri());
             }
             int fsNlriLen = cb.writerIndex() - mpUnReachIndx;
             cb.setShort(mpUnReachIndx, (short) (fsNlriLen - 2));
@@ -415,7 +442,7 @@ public class MpUnReachNlri implements BgpValueType {
             cb.writeByte(FLAGS);
             cb.writeByte(MPUNREACHNLRI_TYPE);
 
-            int mpReachDataIndx = cb.writerIndex();
+            int mpUnReachDataIndex = cb.writerIndex();
             cb.writeShort(0);
             cb.writeShort(afi);
             cb.writeByte(safi);
@@ -431,7 +458,7 @@ public class MpUnReachNlri implements BgpValueType {
                             .getRouteTypeSpec();
                     macIpAdvNlri.write(cb);
                     cb.setByte(iSpecStartIndex, (short) (cb.writerIndex()
-                            - iSpecStartIndex + 1));
+                            - iSpecStartIndex - 1));
                     break;
                 case Constants.BGP_EVPN_ETHERNET_AUTO_DISCOVERY:
                     break;
@@ -444,8 +471,8 @@ public class MpUnReachNlri implements BgpValueType {
                 }
             }
 
-            int evpnNlriLen = cb.writerIndex() - mpReachDataIndx;
-            cb.setShort(mpReachDataIndx, (short) (evpnNlriLen - 2));
+            int evpnNlriLen = cb.writerIndex() - mpUnReachDataIndex;
+            cb.setShort(mpUnReachDataIndex, (short) (evpnNlriLen - 2));
         }
         return cb.writerIndex() - iLenStartIndex;
     }
@@ -460,10 +487,7 @@ public class MpUnReachNlri implements BgpValueType {
     public String toString() {
         return MoreObjects.toStringHelper(getClass()).omitNullValues()
                 .add("mpReachNlri", bgpLSNlri)
-                .add("bgpFlowSpecNlri", bgpFlowSpecNlri)
-                .add("afi", afi)
-                .add("safi", safi)
-                .add("length", length)
-                .toString();
+                .add("bgpFlowSpecNlri", bgpFlowSpecNlri).add("afi", afi)
+                .add("safi", safi).add("length", length).toString();
     }
 }

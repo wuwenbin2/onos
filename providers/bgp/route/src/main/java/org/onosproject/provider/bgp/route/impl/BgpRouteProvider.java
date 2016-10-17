@@ -17,6 +17,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -215,13 +216,13 @@ public class BgpRouteProvider extends AbstractProvider
     private class InternalBgpRouteListener implements BgpRouteListener {
 
         @Override
-        public void addRoute(BgpId bgpId, BgpUpdateMsg updateMsg) {
+        public void processRoute(BgpId bgpId, BgpUpdateMsg updateMsg) {
             List<BgpValueType> pathAttr = updateMsg.bgpPathAttributes()
                     .pathAttributes();
             Iterator<BgpValueType> iterator = pathAttr.iterator();
             RouteTarget rt = null;
-            List<BgpEvpnNlri> evpnReachNlri = null;
-            List<BgpEvpnNlri> evpnUnreachNlri = null;
+            List<BgpEvpnNlri> evpnReachNlri =  new LinkedList<>();
+            List<BgpEvpnNlri> evpnUnreachNlri =  new LinkedList<>();
 
             Ip4Address ipNextHop = null;
             while (iterator.hasNext()) {
@@ -231,15 +232,15 @@ public class BgpRouteProvider extends AbstractProvider
                     ipNextHop = mpReachNlri.nexthop4();
                     if (mpReachNlri
                             .getNlriDetailsType() == NlriDetailsType.EVPN) {
-                        evpnReachNlri = mpReachNlri.bgpEvpnNlri();
+                        evpnReachNlri.addAll(mpReachNlri.bgpEvpnNlri());
                     }
 
                 }
                 if (attr instanceof MpUnReachNlri) {
-                    MpReachNlri mpUnReachNlri = (MpReachNlri) attr;
+                    MpUnReachNlri mpUnReachNlri = (MpUnReachNlri) attr;
                     if (mpUnReachNlri
                             .getNlriDetailsType() == NlriDetailsType.EVPN) {
-                        evpnUnreachNlri = mpUnReachNlri.bgpEvpnNlri();
+                        evpnUnreachNlri.addAll(mpUnReachNlri.bgpEvpnNlri());
                     }
                 }
 
@@ -257,7 +258,7 @@ public class BgpRouteProvider extends AbstractProvider
                 }
             }
 
-            if ((rt != null) && (evpnReachNlri != null)) {
+            if ((rt != null) && (!evpnReachNlri.isEmpty())) {
                 for (BgpEvpnNlri nlri : evpnReachNlri) {
                     if (nlri.getRouteType() == RouteType.MAC_IP_ADVERTISEMENT) {
                         BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri
@@ -283,7 +284,7 @@ public class BgpRouteProvider extends AbstractProvider
                 }
             }
 
-            if ((rt != null) && (evpnUnreachNlri != null)) {
+            if (!evpnUnreachNlri.isEmpty()) {
                 for (BgpEvpnNlri nlri : evpnUnreachNlri) {
                     if (nlri.getRouteType() == RouteType.MAC_IP_ADVERTISEMENT) {
                         BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri
@@ -313,8 +314,18 @@ public class BgpRouteProvider extends AbstractProvider
     }
 
     @Override
-    public void sendEvpnRoute(EvpnRoute evpnRoute) {
-        OperationType operationType = OperationType.ADD;
+    public void sendEvpnRoute(EvpnRoute.OperationType type, EvpnRoute evpnRoute) {
+        OperationType operationType = null;
+        switch (type) {
+        case UPDATE:
+            operationType = OperationType.UPDATE;
+            break;
+        case REMOVE:
+            operationType = OperationType.DELETE;
+            break;
+        default:
+            break;
+        }
         String rdString = evpnRoute.routeDistinguisher()
                 .getRouteDistinguisher();
         MacAddress macAddress = evpnRoute.prefixMac();

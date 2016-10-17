@@ -452,7 +452,7 @@ public class MpReachNlri implements BgpValueType {
             cb.writeByte(FLAGS);
             cb.writeByte(MPREACHNLRI_TYPE);
 
-            int mpReachDataIndx = cb.writerIndex();
+            int mpReachDataIndex = cb.writerIndex();
             cb.writeShort(0);
             cb.writeShort(afi);
             cb.writeByte(safi);
@@ -486,8 +486,8 @@ public class MpReachNlri implements BgpValueType {
                     break;
                 }
             }
-            int evpnNlriLen = cb.writerIndex() - mpReachDataIndx;
-            cb.setShort(mpReachDataIndx, (short) (evpnNlriLen - 2));
+            int evpnNlriLen = cb.writerIndex() - mpReachDataIndex;
+            cb.setShort(mpReachDataIndex, (short) (evpnNlriLen - 2));
         }
 
         return cb.writerIndex() - iLenStartIndex;

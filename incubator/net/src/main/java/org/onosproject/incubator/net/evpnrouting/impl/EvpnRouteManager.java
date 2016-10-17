@@ -132,14 +132,14 @@ public class EvpnRouteManager
     }
 
     @Override
-    public void sendEvpnMessage(EvpnRoute evpnRoute) {
+    public void sendEvpnMessage(EvpnRoute.OperationType  type, EvpnRoute evpnRoute) {
         if (evpnRoute == null) {
             return;
         }
         String scheme = "route";
         BgpEvpnRouteProvider provider = (BgpEvpnRouteProvider) getProvider(scheme);
         if (provider != null) {
-            provider.sendEvpnRoute(evpnRoute);
+            provider.sendEvpnRoute(type, evpnRoute);
             return;
         } else {
             log.error("Provider not found for {}", scheme);

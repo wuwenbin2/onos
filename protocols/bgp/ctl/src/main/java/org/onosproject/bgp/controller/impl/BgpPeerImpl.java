@@ -280,7 +280,6 @@ public class BgpPeerImpl implements BgpPeer {
                            List<BgpEvpnNlri> eVpnComponents) {
         Preconditions.checkNotNull(operType, "Operation type cannot be null");
         Preconditions.checkNotNull(eVpnComponents, "Evpn nlri cannot be null");
-        Preconditions.checkNotNull(nextHop, "Next hop cannot be null");
         sendEvpnUpdateMessageToPeer(operType, nextHop, extCommunit, eVpnComponents);
     }
 
@@ -324,7 +323,7 @@ public class BgpPeerImpl implements BgpPeer {
         }
 
         attributesList.add(new BgpExtendedCommunity(extCommunit));
-        if (operType == OperationType.ADD) {
+        if (operType == OperationType.ADD || operType == OperationType.UPDATE) {
             attributesList
                     .add(new MpReachNlri(eVpnComponents, afi, safi, nextHop));
         } else if (operType == OperationType.DELETE) {
