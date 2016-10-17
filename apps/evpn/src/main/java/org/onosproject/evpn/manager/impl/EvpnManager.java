@@ -370,13 +370,13 @@ public class EvpnManager implements EvpnService {
     @Override
     public void onHostDetected(Host host) {
         log.info("Host detected start {}", host);
-        if (host.ipAddresses().iterator().next().getIp4Address().toString()
-                .startsWith("10")) {
-            // add test info
-            addTestInfo();
-        } else {
-            addTestInfo2();
-        }
+//        if (host.ipAddresses().iterator().next().getIp4Address().toString()
+//                .startsWith("10")) {
+//            // add test info
+//            addTestInfo();
+//        } else {
+//            addTestInfo2();
+//        }
         DeviceId deviceId = host.location().deviceId();
         Device device = deviceService.getDevice(deviceId);
         if (!mastershipService.isLocalMaster(deviceId)) {

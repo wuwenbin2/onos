@@ -96,7 +96,6 @@ import org.onosproject.net.packet.PacketProcessor;
 import org.onosproject.net.packet.PacketService;
 import org.onosproject.store.serializers.KryoNamespaces;
 import org.onosproject.store.service.ConsistentMap;
-import org.onosproject.store.service.EventuallyConsistentMap;
 import org.onosproject.store.service.LogicalClockService;
 import org.onosproject.store.service.Serializer;
 import org.onosproject.store.service.StorageService;
@@ -242,13 +241,20 @@ public class VtnManager implements VtnService {
     private static final int SNAT_DEFAULT_RULE_PRIORITY = 0;
     private static final byte[] ZERO_MAC_ADDRESS = MacAddress.ZERO.toBytes();
 
-    private EventuallyConsistentMap<VirtualPortId, VirtualPort> vPortStore;
-    private EventuallyConsistentMap<IpAddress, Boolean> switchesOfController;
-    private EventuallyConsistentMap<DeviceId, NetworkOfLocalHostPorts> switchOfLocalHostPorts;
-    private EventuallyConsistentMap<SubnetId, Map<HostId, Host>> hostsOfSubnet;
-    private EventuallyConsistentMap<TenantRouter, Boolean> routerInfFlagOfTenantRouter;
-    private EventuallyConsistentMap<DeviceId, Port> exPortOfDevice;
-    private EventuallyConsistentMap<IpAddress, FloatingIp> floatingIpStore;
+//    private EventuallyConsistentMap<VirtualPortId, VirtualPort> vPortStore;
+//    private EventuallyConsistentMap<IpAddress, Boolean> switchesOfController;
+//    private EventuallyConsistentMap<DeviceId, NetworkOfLocalHostPorts> switchOfLocalHostPorts;
+//    private EventuallyConsistentMap<SubnetId, Map<HostId, Host>> hostsOfSubnet;
+//    private EventuallyConsistentMap<TenantRouter, Boolean> routerInfFlagOfTenantRouter;
+//    private EventuallyConsistentMap<DeviceId, Port> exPortOfDevice;
+//    private EventuallyConsistentMap<IpAddress, FloatingIp> floatingIpStore;
+    private Map<VirtualPortId, VirtualPort> vPortStore;
+    private Map<IpAddress, Boolean> switchesOfController;
+    private Map<DeviceId, NetworkOfLocalHostPorts> switchOfLocalHostPorts;
+    private Map<SubnetId, Map<HostId, Host>> hostsOfSubnet;
+    private Map<TenantRouter, Boolean> routerInfFlagOfTenantRouter;
+    private Map<DeviceId, Port> exPortOfDevice;
+    private Map<IpAddress, FloatingIp> floatingIpStore;
     private static ConsistentMap<String, String> exPortMap;
 
     private VtnL3PacketProcessor l3PacketProcessor = new VtnL3PacketProcessor();
@@ -293,47 +299,51 @@ public class VtnManager implements VtnService {
                                 .register(DefaultVirtualPort.class)
                                 .register(RouterId.class)
                                 .register(TenantRouter.class);
-        floatingIpStore = storageService
-                .<IpAddress, FloatingIp>eventuallyConsistentMapBuilder()
-                .withName(FLOATINGSTORE).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
+        floatingIpStore = new HashMap<IpAddress, FloatingIp>();
+//                storageService
+//                .<IpAddress, FloatingIp>eventuallyConsistentMapBuilder()
+//                .withName(FLOATINGSTORE).withSerializer(serializer)
+//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//                .build();
+        vPortStore = new HashMap<VirtualPortId, VirtualPort>();
+//                storageService
+//                .<VirtualPortId, VirtualPort>eventuallyConsistentMapBuilder()
+//                .withName(VIRTUALPORT).withSerializer(serializer)
+//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//                .build();
+        switchesOfController = new HashMap<IpAddress, Boolean>();
+//                storageService
+//                .<IpAddress, Boolean>eventuallyConsistentMapBuilder()
+//                .withName(SWITCHES_OF_CONTROLLER).withSerializer(serializer)
+//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//                .build();
+        switchOfLocalHostPorts = new HashMap<DeviceId, NetworkOfLocalHostPorts>();
+//                storageService
+//                .<DeviceId, NetworkOfLocalHostPorts>eventuallyConsistentMapBuilder()
+//                .withName(SWITCH_OF_LOCAL_HOST_PORTS).withSerializer(serializer)
+//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//                .build();
+        hostsOfSubnet = new HashMap<SubnetId, Map<HostId, Host>>();
+//                storageService
+//                .<SubnetId, Map<HostId, Host>>eventuallyConsistentMapBuilder()
+//                .withName(HOSTS_OF_SUBNET).withSerializer(serializer)
+//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//                .build();                
 
-        vPortStore = storageService
-                .<VirtualPortId, VirtualPort>eventuallyConsistentMapBuilder()
-                .withName(VIRTUALPORT).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
-
-        switchesOfController = storageService
-                .<IpAddress, Boolean>eventuallyConsistentMapBuilder()
-                .withName(SWITCHES_OF_CONTROLLER).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
-
-        switchOfLocalHostPorts = storageService
-                .<DeviceId, NetworkOfLocalHostPorts>eventuallyConsistentMapBuilder()
-                .withName(SWITCH_OF_LOCAL_HOST_PORTS).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
-
-        hostsOfSubnet = storageService
-                .<SubnetId, Map<HostId, Host>>eventuallyConsistentMapBuilder()
-                .withName(HOSTS_OF_SUBNET).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
-
-        routerInfFlagOfTenantRouter = storageService
-                .<TenantRouter, Boolean>eventuallyConsistentMapBuilder()
-                .withName(ROUTERINF_FLAG_OF_TENANTROUTER).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
-
-        exPortOfDevice = storageService
-                .<DeviceId, Port>eventuallyConsistentMapBuilder()
-                .withName(EX_PORT_OF_DEVICE).withSerializer(serializer)
-                .withTimestampProvider((k, v) -> clockService.getTimestamp())
-                .build();
+        routerInfFlagOfTenantRouter = new HashMap<TenantRouter, Boolean>();
+//                storageService
+//                .<TenantRouter, Boolean>eventuallyConsistentMapBuilder()
+//                .withName(ROUTERINF_FLAG_OF_TENANTROUTER).withSerializer(serializer)
+//                .withTimestampProvider((k, v) -> clockService.getTimestamp())
+//                .build();
+        exPortOfDevice = new HashMap<DeviceId, Port>();
+//                storageService
+//                .<DeviceId, Port>consistentMapBuilder()
+//                .withName(EX_PORT_OF_DEVICE)
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .withSerializer(Serializer.using(Arrays.asList(KryoNamespaces.API)))
+//                .build();
 
         exPortMap = storageService
                 .<String, String>consistentMapBuilder()
@@ -479,7 +489,7 @@ public class VtnManager implements VtnService {
             log.error("The ifaceId of Host is null");
             return;
         }
-        programSffAndClassifierHost(host, Objective.Operation.REMOVE);
+//        programSffAndClassifierHost(host, Objective.Operation.REMOVE);
         // apply L2 openflow rules
         applyHostMonitoredL2Rules(host, Objective.Operation.REMOVE);
         // apply L3 openflow rules
