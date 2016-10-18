@@ -31,19 +31,18 @@ import org.apache.felix.scr.annotations.Service;
 import org.onlab.packet.EthType.EtherType;
 import org.onlab.packet.Ip4Address;
 import org.onlab.packet.IpAddress;
-import org.onlab.packet.MacAddress;
 import org.onlab.packet.MplsLabel;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.evpn.manager.EvpnService;
-import org.onosproject.evpn.rsc.DefaultVpnInstance;
-import org.onosproject.evpn.rsc.DefaultVpnPort;
 import org.onosproject.evpn.rsc.VpnInstance;
 import org.onosproject.evpn.rsc.VpnInstanceId;
 import org.onosproject.evpn.rsc.VpnPort;
 import org.onosproject.evpn.rsc.VpnPortId;
 import org.onosproject.evpn.rsc.baseport.BasePortService;
 import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
+import org.onosproject.evpn.rsc.vpnport.VpnPortEvent;
+import org.onosproject.evpn.rsc.vpnport.VpnPortListener;
 import org.onosproject.evpn.rsc.vpnport.VpnPortService;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstance;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
@@ -92,8 +91,6 @@ import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
 import org.onosproject.vtn.util.VtnData;
-import org.onosproject.vtnrsc.VirtualPort;
-import org.onosproject.vtnrsc.VirtualPortId;
 import org.onosproject.vtnrsc.virtualport.VirtualPortService;
 import org.slf4j.Logger;
 
@@ -158,13 +155,14 @@ public class EvpnManager implements EvpnService {
 
     private final HostListener hostListener = new InnerHostListener();
     private final EvpnRouteListener routeListener = new InnerRouteListener();
-
+    private final  VpnPortListener vpnPortListner = new InnerVpnPortListener();
     private ApplicationId appId;
     @Activate
     public void activate() {
         appId = coreService.registerApplication(APP_ID);
         hostService.addListener(hostListener);
         routeService.addListener(routeListener);
+        vpnPortService.addListener(vpnPortListner);
         labelAdminService
                 .createGlobalPool(LabelResourceId.labelResourceId(1),
                                   LabelResourceId.labelResourceId(1000));
@@ -278,7 +276,7 @@ public class EvpnManager implements EvpnService {
             VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
             VpnInstance vpnInstance = vpnInstanceService
                     .getInstance(vpnInstanceId);
-            if (route.routeTarget().equals(vpnInstance.routeTarget())) {
+            if (route.routeDistinguisher().equals(vpnInstance.routeDistinguishers())) {
                 vpnHosts.add(h);
             }
         }
@@ -293,9 +291,9 @@ public class EvpnManager implements EvpnService {
         }
         // deal with public route deleted and transfer to private route
         vpnInstanceService.getInstances().forEach(vpnInstance -> {
-            RouteTarget rt = privateRouteService
-                    .getRtByInstanceName(vpnInstance.vpnInstanceName());
-            if (route.routeTarget().equals(rt)) {
+            RouteDistinguisher  rd   = privateRouteService
+                    .getRdByInstanceName(vpnInstance.vpnInstanceName());
+            if (route.routeDistinguisher().equals(rd)) {
                 EvpnInstancePrefix evpnPrefix = EvpnInstancePrefix
                         .evpnPrefix(EvpnInstance.evpnMessage(
                                                              route.routeDistinguisher(),
@@ -375,13 +373,6 @@ public class EvpnManager implements EvpnService {
     @Override
     public void onHostDetected(Host host) {
         log.info("Host detected start {}", host);
-//        if (host.ipAddresses().iterator().next().getIp4Address().toString()
-//                .startsWith("10")) {
-//            // add test info
-//            addTestInfo();
-//        } else {
-//            addTestInfo2();
-//        }
         DeviceId deviceId = host.location().deviceId();
         Device device = deviceService.getDevice(deviceId);
         if (!mastershipService.isLocalMaster(deviceId)) {
@@ -458,84 +449,6 @@ public class EvpnManager implements EvpnService {
         }
     }
 
-    private void addTestInfo() {
-        VpnInstanceId instanceId = VpnInstanceId.vpnInstanceId("1001");
-        EvpnInstanceName evpnName = EvpnInstanceName.evpnName("vpn1");
-        RouteDistinguisher rd = RouteDistinguisher.routeDistinguisher("100:1");
-        RouteTarget rt = RouteTarget.routeTarget("100:1");
-        DefaultVpnInstance vpnInstance = new DefaultVpnInstance(instanceId,
-                                                                evpnName,
-                                                                "descripstion",
-                                                                rd, rt);
-        Collection<VirtualPort> vports = virtualPortService.getPorts();
-        DefaultVpnPort vpnPort = new DefaultVpnPort(VpnPortId
-                .vpnPortId("123456"), instanceId);
-        for (VirtualPort p : vports) {
-            boolean exist = vpnPortService.exists(VpnPortId
-                        .vpnPortId(p.portId().portId()));
-            if (!exist && p.deviceOwner().equals("compute:nova")) {
-                vpnPort = new DefaultVpnPort(VpnPortId
-                        .vpnPortId(p.portId().portId()), instanceId);
-            }
-        }
-        vpnInstanceService.createInstances(Sets.newHashSet(vpnInstance));
-        vpnPortService.createPorts(Sets.newHashSet(vpnPort));
-        EvpnInstanceRoute evpnInstanceRoute = new EvpnInstanceRoute(evpnName,
-                                                                    rd, rt,
-                                                                    EvpnInstancePrefix
-                                                                            .evpnPrefix(EvpnInstance
-                                                                                    .evpnMessage(rd,
-                                                                                                 rt,
-                                                                                                 evpnName),
-                                                                                        MacAddress.ZERO,
-                                                                                        Ip4Address
-                                                                                                .valueOf("0.0.0.0")),
-                                                                    EvpnInstanceNextHop
-                                                                            .evpnNextHop(IpAddress
-                                                                                    .valueOf("127.0.0.1"),
-                                                                                         Label.label(0)));
-        privateRouteAdminService
-                .updateEvpnRoute(Sets.newHashSet(evpnInstanceRoute));
-    }
-    private void addTestInfo2() {
-        VpnInstanceId instanceId = VpnInstanceId.vpnInstanceId("1002");
-        EvpnInstanceName evpnName = EvpnInstanceName.evpnName("vpn2");
-        RouteDistinguisher rd = RouteDistinguisher.routeDistinguisher("100:2");
-        RouteTarget rt = RouteTarget.routeTarget("100:2");
-        DefaultVpnInstance vpnInstance = new DefaultVpnInstance(instanceId,
-                                                                evpnName,
-                                                                "descripstion",
-                                                                rd, rt);
-        Collection<VirtualPort> vports = virtualPortService.getPorts();
-        DefaultVpnPort vpnPort = new DefaultVpnPort(VpnPortId
-                .vpnPortId("123456"), instanceId);
-        for (VirtualPort p : vports) {
-            boolean exist = vpnPortService.exists(VpnPortId
-                        .vpnPortId(p.portId().portId()));
-            if (!exist && p.deviceOwner().equals("compute:nova")) {
-                vpnPort = new DefaultVpnPort(VpnPortId
-                        .vpnPortId(p.portId().portId()), instanceId);
-            }
-        }
-        vpnInstanceService.createInstances(Sets.newHashSet(vpnInstance));
-        vpnPortService.createPorts(Sets.newHashSet(vpnPort));
-        EvpnInstanceRoute evpnInstanceRoute = new EvpnInstanceRoute(evpnName,
-                                                                    rd, rt,
-                                                                    EvpnInstancePrefix
-                                                                            .evpnPrefix(EvpnInstance
-                                                                                    .evpnMessage(rd,
-                                                                                                 rt,
-                                                                                                 evpnName),
-                                                                                        MacAddress.ZERO,
-                                                                                        Ip4Address
-                                                                                                .valueOf("0.0.0.0")),
-                                                                    EvpnInstanceNextHop
-                                                                            .evpnNextHop(IpAddress
-                                                                                    .valueOf("127.0.0.1"),
-                                                                                         Label.label(0)));
-        privateRouteAdminService
-                .updateEvpnRoute(Sets.newHashSet(evpnInstanceRoute));
-    }
     @Override
     public void onHostVanished(Host host) {
         log.info("Host vanished start {}", host);
@@ -654,29 +567,75 @@ public class EvpnManager implements EvpnService {
         }
     }
 
-    private void onVpnPortDelete(VpnPort vpnPort){
-        //delete the flows of this vpn
-        VpnPortId vpnPortId = vpnPort.id();
-        VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
-        if (!vpnInstanceService.exists(vpnInstanceId)) {
-            log.error("Vpn Instance {} is not exist", vpnInstanceId);
-            return ;
+    private class InnerVpnPortListener implements VpnPortListener {
+
+        @Override
+        public void event(VpnPortEvent event) {
+            VpnPort vpnPort = event.subject();
+            if (VpnPortEvent.Type.VPNPORT_DELETE == event.type()) {
+                onVpnPortDelete(vpnPort);
+            } else if (VpnPortEvent.Type.VPNPORT_SET == event.type()) {
+                onVpnPortSet(vpnPort);
+            }
         }
-        VpnInstance instance = vpnInstanceService.getInstance(vpnInstanceId);
-        RouteTarget rt = instance.routeTarget();
+
+    }
+
+    private void onVpnPortDelete(VpnPort vpnPort) {
+        // delete the flows of this vpn
         hostService.getHosts().forEach(host -> {
-            if(vpnPortId.equals(host.annotations().value("ifaceid"))) {
+            VpnPortId vpnPortId = vpnPort.id();
+            VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
+            if (!vpnInstanceService.exists(vpnInstanceId)) {
+                log.error("Vpn Instance {} is not exist", vpnInstanceId);
+                return;
+            }
+            VpnInstance instance = vpnInstanceService.getInstance(vpnInstanceId);
+            RouteTarget rt = instance.routeTarget();
+            if (vpnPortId.vpnPortId().equals(host.annotations().value("ifaceid"))) {
                 DeviceId deviceId = host.location().deviceId();
                 Device device = deviceService.getDevice(deviceId);
                 Collection<EvpnRoute> routes = routeService.getAllRoutes();
                 for (EvpnRoute route : routes) {
-                    Set<Host> macs = hostService.getHostsByMac(route.prefixMac());
+                    Set<Host> macs = hostService
+                            .getHostsByMac(route.prefixMac());
                     if (!macs.isEmpty() || !rt.equals(route.routeTarget())) {
                         continue;
                     }
-                    ForwardingObjective.Builder build = getMplsOutBuilder(device, route,
+                    ForwardingObjective.Builder build = getMplsOutBuilder(device,
+                                                                          route,
                                                                           host);
                     flowObjectiveService.forward(deviceId, build.remove());
+                }
+            }
+        });
+    }
+
+    private void onVpnPortSet(VpnPort vpnPort) {
+        // delete the flows of this vpn
+        hostService.getHosts().forEach(host -> {
+            VpnPortId vpnPortId = vpnPort.id();
+            VpnInstanceId vpnInstanceId = vpnPort.vpnInstanceId();
+            if (!vpnInstanceService.exists(vpnInstanceId)) {
+                log.error("Vpn Instance {} is not exist", vpnInstanceId);
+                return;
+            }
+            VpnInstance instance = vpnInstanceService.getInstance(vpnInstanceId);
+            RouteTarget rt = instance.routeTarget();
+            if (vpnPortId.vpnPortId().equals(host.annotations().value("ifaceid"))) {
+                DeviceId deviceId = host.location().deviceId();
+                Device device = deviceService.getDevice(deviceId);
+                Collection<EvpnRoute> routes = routeService.getAllRoutes();
+                for (EvpnRoute route : routes) {
+                    Set<Host> macs = hostService
+                            .getHostsByMac(route.prefixMac());
+                    if (!macs.isEmpty() || !rt.equals(route.routeTarget())) {
+                        continue;
+                    }
+                    ForwardingObjective.Builder build = getMplsOutBuilder(device,
+                                                                          route,
+                                                                          host);
+                    flowObjectiveService.forward(deviceId, build.add());
                 }
             }
         });

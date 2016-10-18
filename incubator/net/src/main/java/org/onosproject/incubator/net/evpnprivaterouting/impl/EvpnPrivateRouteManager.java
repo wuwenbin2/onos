@@ -46,6 +46,7 @@ import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteListene
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteService;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStore;
 import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteStoreDelegate;
+import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.net.host.HostService;
 import org.slf4j.Logger;
@@ -244,5 +245,10 @@ public class EvpnPrivateRouteManager
         public void notify(EvpnInstanceRouteEvent event) {
             post(event);
         }
+    }
+
+    @Override
+    public RouteDistinguisher getRdByInstanceName(EvpnInstanceName name) {
+        return routeStore.getRdByInstanceName(name);
     }
 }

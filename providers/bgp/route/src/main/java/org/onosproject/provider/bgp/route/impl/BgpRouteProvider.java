@@ -36,7 +36,6 @@ import org.onosproject.bgpio.protocol.BgpUpdateMsg;
 import org.onosproject.bgpio.protocol.evpn.BgpEvpnNlriVer4;
 import org.onosproject.bgpio.protocol.evpn.BgpMacIpAdvNlriVer4;
 import org.onosproject.bgpio.protocol.evpn.RouteType;
-import org.onosproject.bgpio.types.BgpEncap;
 import org.onosproject.bgpio.types.BgpExtendedCommunity;
 import org.onosproject.bgpio.types.BgpValueType;
 import org.onosproject.bgpio.types.EthernetSegmentidentifier;
@@ -122,10 +121,10 @@ public class BgpRouteProvider extends AbstractProvider
         MplsLabel mplsLabel2 = null;
 
         List<BgpValueType> extCom = new ArrayList<BgpValueType>();
-        RouteTarget rTarget = stringToRT(rtString);
-        extCom.add(rTarget);
-        BgpEncap enc = new BgpEncap(0, (short) 0x08);
-        extCom.add(enc);
+        if (operationType == OperationType.UPDATE && rtString != null) {
+            RouteTarget rTarget = stringToRT(rtString);
+            extCom.add(rTarget);
+        }
         BgpMacIpAdvNlriVer4 routeTypeSpec = new BgpMacIpAdvNlriVer4(rd, esi,
                                                                     ethernetTagID,
                                                                     macAddress,
@@ -137,7 +136,8 @@ public class BgpRouteProvider extends AbstractProvider
         eVpnComponents.add(nlri);
 
         controller.getPeers().forEach(peer -> {
-            log.info("Send route update eVpnComponents {} to peer {}", eVpnComponents, peer);
+            log.info("Send route update eVpnComponents {} to peer {}",
+                     eVpnComponents, peer);
             peer.updateEvpn(operationType, nextHop, extCom, eVpnComponents);
         });
 
@@ -298,12 +298,12 @@ public class BgpRouteProvider extends AbstractProvider
                                  macIpAdvNlri.toString());
                         // Delete route from route system
                         Source source = Source.REMOTE;
-                        // For mpUnreachNlri, nexthop is null
+                        // For mpUnreachNlri, nexthop and rt is null
                         EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
                                                             ipAddress,
-                                                            ipNextHop,
+                                                            null,
                                                             rdToString(rd),
-                                                            rtToString(rt),
+                                                            null,
                                                             labelToInt(label));
                         routeAdminService.withdrawEvpnRoute(Collections
                                 .singleton(evpnRoute));

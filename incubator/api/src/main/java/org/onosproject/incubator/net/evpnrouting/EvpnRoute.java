@@ -90,14 +90,17 @@ public class EvpnRoute {
         checkNotNull(prefixMac);
         checkNotNull(prefixIp);
         checkNotNull(rdToString);
-        checkNotNull(rtToString);
         checkNotNull(labelToInt);
         this.source = checkNotNull(source);
         this.prefixMac = prefixMac;
         this.prefixIp = prefixIp;
         this.nextHop = nextHop;
         this.rd = RouteDistinguisher.routeDistinguisher(rdToString);
-        this.rt = RouteTarget.routeTarget(rtToString);
+        if (rtToString != null) {
+            this.rt = RouteTarget.routeTarget(rtToString);
+        } else {
+            this.rt = null;
+        }
         this.label = Label.label(labelToInt);
     }
 

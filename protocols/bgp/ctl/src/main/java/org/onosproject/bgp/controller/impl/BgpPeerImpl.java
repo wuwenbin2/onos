@@ -322,7 +322,9 @@ public class BgpPeerImpl implements BgpPeer {
             attributesList.add(new AsPath());
         }
 
-        attributesList.add(new BgpExtendedCommunity(extCommunit));
+        if (!extCommunit.isEmpty()) {
+            attributesList.add(new BgpExtendedCommunity(extCommunit));
+        }
         if (operType == OperationType.ADD || operType == OperationType.UPDATE) {
             attributesList
                     .add(new MpReachNlri(eVpnComponents, afi, safi, nextHop));

@@ -191,4 +191,12 @@ public class LocalEvpnPrivateRouteStore
 
     }
 
+    @Override
+    public RouteDistinguisher getRdByInstanceName(EvpnInstanceName name) {
+        if (routeTables == null) {
+            return null;
+        }
+        return routeTables.get(name).rd;
+    }
+
 }
