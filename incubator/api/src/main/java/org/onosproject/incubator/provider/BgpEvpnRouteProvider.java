@@ -21,5 +21,11 @@ import org.onosproject.net.provider.Provider;
 
 public interface BgpEvpnRouteProvider extends Provider {
 
-    void sendEvpnRoute(EvpnRoute evpnRoute);
+    /**
+     * Send evpn route to provider for process.
+     *
+     * @param type evpn route operation type
+     * @param evpnRoute evpn route
+     */
+    void sendEvpnRoute(EvpnRoute.OperationType type, EvpnRoute evpnRoute);
 }

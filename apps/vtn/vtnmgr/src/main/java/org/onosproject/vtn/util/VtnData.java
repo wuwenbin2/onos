@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.onlab.packet.IpAddress;
 import org.onosproject.net.AnnotationKeys;
@@ -26,7 +27,6 @@ import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.Port;
 import org.onosproject.net.PortNumber;
-import org.onosproject.store.service.EventuallyConsistentMap;
 import org.onosproject.vtnrsc.FixedIp;
 import org.onosproject.vtnrsc.TenantNetworkId;
 import org.onosproject.vtnrsc.VirtualPort;
@@ -109,7 +109,7 @@ public final class VtnData {
      * @param vPortId VirtualPortId of the VirtualPort
      * @return VirtualPort
      */
-    public static VirtualPort getPort(EventuallyConsistentMap<VirtualPortId, VirtualPort> vPortStore,
+    public static VirtualPort getPort(Map<VirtualPortId, VirtualPort> vPortStore,
                                       VirtualPortId vPortId) {
         if (vPortStore != null) {
             return vPortStore.get(vPortId);
@@ -124,7 +124,7 @@ public final class VtnData {
      * @param fixedIP FixedIp of the VirtualPort
      * @return VirtualPort
      */
-    public static VirtualPort getPort(EventuallyConsistentMap<VirtualPortId, VirtualPort> vPortStore,
+    public static VirtualPort getPort(Map<VirtualPortId, VirtualPort> vPortStore,
                                       FixedIp fixedIP) {
         if (vPortStore != null) {
             List<VirtualPort> vPorts = new ArrayList<>();
@@ -153,7 +153,7 @@ public final class VtnData {
      * @param ip IpAddress of the VirtualPort
      * @return VirtualPort
      */
-    public static VirtualPort getPort(EventuallyConsistentMap<VirtualPortId, VirtualPort> vPortStore,
+    public static VirtualPort getPort(Map<VirtualPortId, VirtualPort> vPortStore,
                                       TenantNetworkId networkId, IpAddress ip) {
         if (vPortStore != null) {
             List<VirtualPort> vPorts = new ArrayList<>();

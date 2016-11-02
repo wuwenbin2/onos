@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package org.onosproject.evpn.rsc;
+
+package org.onosproject.evpn.rsc.vpnport;
+
+import org.onosproject.event.EventListener;
 
 /**
- * Representation of a VPNPort.
+ * Entity capable of Vpn Port related events.
  */
-public interface VpnPort {
+public interface VpnPortListener extends EventListener<VpnPortEvent> {
 
-    /**
-     * Returns the VPN instance identifier.
-     *
-     * @return VPN instance identifier
-     */
-    VpnPortId id();
-
-    /**
-     * Returns the VPN instance identifier.
-     *
-     * @return VPN instance identifier
-     */
-    VpnInstanceId vpnInstanceId();
 }

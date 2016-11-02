@@ -73,7 +73,7 @@ public class BgpMacIpAdvNlriVer4 implements RouteTypeSpec {
 
     public BgpMacIpAdvNlriVer4(RouteDistinguisher rd,
                                EthernetSegmentidentifier esi,
-                               int ethernetTagID, MacAddress macAddress, byte ipAddressLength,
+                               int ethernetTagID, MacAddress macAddress,
                                InetAddress ipAddress, MplsLabel mplsLabel1,
                                MplsLabel mplsLabel2) {
         this.rd = rd;
@@ -81,8 +81,13 @@ public class BgpMacIpAdvNlriVer4 implements RouteTypeSpec {
         this.ethernetTagID = ethernetTagID;
         this.macAddressLength = MAC_ADDRESS_LENGTH;
         this.macAddress = macAddress;
-        this.ipAddressLength = ipAddressLength;
-        this.ipAddress = ipAddress;
+        if (ipAddress != null) {
+            this.ipAddressLength = IPV4_ADDRESS_LENGTH;
+            this.ipAddress = ipAddress;
+        } else {
+            this.ipAddressLength = 0;
+            this.ipAddress = null;
+        }
         this.mplsLabel1 = mplsLabel1;
         this.mplsLabel2 = mplsLabel2;
     }
@@ -108,7 +113,7 @@ public class BgpMacIpAdvNlriVer4 implements RouteTypeSpec {
         }
 
         return new BgpMacIpAdvNlriVer4(rd, esi, ethernetTagID, macAddress,
-                                       ipAddressLength, ipAddress, mplsLabel1,
+                                       ipAddress, mplsLabel1,
                                        mplsLabel2);
     }
 

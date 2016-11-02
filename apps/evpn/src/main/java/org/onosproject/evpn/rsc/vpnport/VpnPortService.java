@@ -21,6 +21,8 @@ import java.util.Collection;
 import org.onosproject.evpn.rsc.VpnPort;
 import org.onosproject.evpn.rsc.VpnPortId;
 
+import com.justinsb.etcd.EtcdResult;
+
 /**
  * Service for interacting with the inventory of VPN port.
  */
@@ -71,4 +73,25 @@ public interface VpnPortService {
      *         successfully.
      */
     boolean removePorts(Iterable<VpnPortId> vpnPortIds);
+
+    /**
+     * process Etcd response.
+     *
+     * @param response Etcd response
+     */
+    void processEtcdResponse(EtcdResult response);
+
+    /**
+     * Adds the specified listener to Vpn Port manager.
+     *
+     * @param listener Vpn Port listener
+     */
+    void addListener(VpnPortListener listener);
+
+    /**
+     * Removes the specified listener to Vpn Port manager.
+     *
+     * @param listener Vpn Port listener
+     */
+    void removeListener(VpnPortListener listener);
 }

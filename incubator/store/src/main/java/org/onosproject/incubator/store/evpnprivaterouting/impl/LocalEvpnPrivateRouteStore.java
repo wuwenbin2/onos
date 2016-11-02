@@ -68,8 +68,9 @@ public class LocalEvpnPrivateRouteStore
                     .evpnInstanceName(), route
                             .routeDistinguisher(), route.routeTarget());
             routeTables.put(route.evpnInstanceName(), evpnInstanceRouteTable);
+        } else {
+            routeTables.get(route.evpnInstanceName()).update(route);
         }
-        routeTables.get(route.evpnInstanceName()).update(route);
 
     }
 
@@ -188,6 +189,14 @@ public class LocalEvpnPrivateRouteStore
             return routes;
         }
 
+    }
+
+    @Override
+    public RouteDistinguisher getRdByInstanceName(EvpnInstanceName name) {
+        if (routeTables == null) {
+            return null;
+        }
+        return routeTables.get(name).rd;
     }
 
 }

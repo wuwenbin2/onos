@@ -17,6 +17,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -35,7 +36,6 @@ import org.onosproject.bgpio.protocol.BgpUpdateMsg;
 import org.onosproject.bgpio.protocol.evpn.BgpEvpnNlriVer4;
 import org.onosproject.bgpio.protocol.evpn.BgpMacIpAdvNlriVer4;
 import org.onosproject.bgpio.protocol.evpn.RouteType;
-import org.onosproject.bgpio.types.BgpEncap;
 import org.onosproject.bgpio.types.BgpExtendedCommunity;
 import org.onosproject.bgpio.types.BgpValueType;
 import org.onosproject.bgpio.types.EthernetSegmentidentifier;
@@ -111,26 +111,23 @@ public class BgpRouteProvider extends AbstractProvider
 
     private void sendUpdateMessage(OperationType operationType, String rdString,
                                    String rtString, Ip4Address nextHop,
-                                   MacAddress macAddress, int labelInt) {
+                                   MacAddress macAddress, InetAddress ipAddress, int labelInt) {
 
         List<BgpEvpnNlri> eVpnComponents = new ArrayList<BgpEvpnNlri>();
         RouteDistinguisher rd = stringToRD(rdString);
         EthernetSegmentidentifier esi = new EthernetSegmentidentifier(new byte[10]);
         int ethernetTagID = 0;
-        byte ipAddressLength = 0;
-        InetAddress ipAddress = null;
         MplsLabel mplsLabel1 = intToLabel(labelInt);
         MplsLabel mplsLabel2 = null;
 
         List<BgpValueType> extCom = new ArrayList<BgpValueType>();
-        RouteTarget rTarget = stringToRT(rtString);
-        extCom.add(rTarget);
-        BgpEncap enc = new BgpEncap(0, (short) 0x08);
-        extCom.add(enc);
+        if (operationType == OperationType.UPDATE && rtString != null) {
+            RouteTarget rTarget = stringToRT(rtString);
+            extCom.add(rTarget);
+        }
         BgpMacIpAdvNlriVer4 routeTypeSpec = new BgpMacIpAdvNlriVer4(rd, esi,
                                                                     ethernetTagID,
                                                                     macAddress,
-                                                                    ipAddressLength,
                                                                     ipAddress,
                                                                     mplsLabel1,
                                                                     mplsLabel2);
@@ -139,7 +136,8 @@ public class BgpRouteProvider extends AbstractProvider
         eVpnComponents.add(nlri);
 
         controller.getPeers().forEach(peer -> {
-            log.info("Send route update eVpnComponents {} to peer {}", eVpnComponents, peer);
+            log.info("Send route update eVpnComponents {} to peer {}",
+                     eVpnComponents, peer);
             peer.updateEvpn(operationType, nextHop, extCom, eVpnComponents);
         });
 
@@ -215,40 +213,16 @@ public class BgpRouteProvider extends AbstractProvider
 
     }
 
-    public void update(EvpnRoute evpnRoute) {
-        OperationType operationType = OperationType.ADD;
-        String rdString = evpnRoute.routeDistinguisher()
-                .getRouteDistinguisher();
-        MacAddress macAddress = evpnRoute.prefix();
-        Ip4Address nextHop = evpnRoute.nextHop();
-        String rtString = evpnRoute.routeTarget().getRouteTarget();
-        int labelInt = evpnRoute.label().getLabel();
-        sendUpdateMessage(operationType, rdString, rtString, nextHop,
-                          macAddress, labelInt);
-    }
-
-    public void withdraw(EvpnRoute evpnRoute) {
-        OperationType operationType = OperationType.DELETE;
-        String rdString = evpnRoute.routeDistinguisher()
-                .getRouteDistinguisher();
-        MacAddress macAddress = evpnRoute.prefix();
-        Ip4Address nextHop = evpnRoute.nextHop();
-        String rtString = evpnRoute.routeTarget().getRouteTarget();
-        int labelInt = evpnRoute.label().getLabel();
-        sendUpdateMessage(operationType, rdString, rtString, nextHop,
-                          macAddress, labelInt);
-    }
-
     private class InternalBgpRouteListener implements BgpRouteListener {
 
         @Override
-        public void addRoute(BgpId bgpId, BgpUpdateMsg updateMsg) {
+        public void processRoute(BgpId bgpId, BgpUpdateMsg updateMsg) {
             List<BgpValueType> pathAttr = updateMsg.bgpPathAttributes()
                     .pathAttributes();
             Iterator<BgpValueType> iterator = pathAttr.iterator();
             RouteTarget rt = null;
-            List<BgpEvpnNlri> evpnReachNlri = null;
-            List<BgpEvpnNlri> evpnUnreachNlri = null;
+            List<BgpEvpnNlri> evpnReachNlri =  new LinkedList<>();
+            List<BgpEvpnNlri> evpnUnreachNlri =  new LinkedList<>();
 
             Ip4Address ipNextHop = null;
             while (iterator.hasNext()) {
@@ -258,15 +232,15 @@ public class BgpRouteProvider extends AbstractProvider
                     ipNextHop = mpReachNlri.nexthop4();
                     if (mpReachNlri
                             .getNlriDetailsType() == NlriDetailsType.EVPN) {
-                        evpnReachNlri = mpReachNlri.bgpEvpnNlri();
+                        evpnReachNlri.addAll(mpReachNlri.bgpEvpnNlri());
                     }
 
                 }
                 if (attr instanceof MpUnReachNlri) {
-                    MpReachNlri mpUnReachNlri = (MpReachNlri) attr;
+                    MpUnReachNlri mpUnReachNlri = (MpUnReachNlri) attr;
                     if (mpUnReachNlri
                             .getNlriDetailsType() == NlriDetailsType.EVPN) {
-                        evpnUnreachNlri = mpUnReachNlri.bgpEvpnNlri();
+                        evpnUnreachNlri.addAll(mpUnReachNlri.bgpEvpnNlri());
                     }
                 }
 
@@ -284,12 +258,13 @@ public class BgpRouteProvider extends AbstractProvider
                 }
             }
 
-            if ((rt != null) && (evpnReachNlri != null)) {
+            if ((rt != null) && (!evpnReachNlri.isEmpty())) {
                 for (BgpEvpnNlri nlri : evpnReachNlri) {
                     if (nlri.getRouteType() == RouteType.MAC_IP_ADVERTISEMENT) {
                         BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri
                                 .getRouteTypeSpec();
                         MacAddress macAddress = macIpAdvNlri.getMacAddress();
+                        Ip4Address ipAddress = Ip4Address.valueOf(macIpAdvNlri.getIpAddress());
                         RouteDistinguisher rd = macIpAdvNlri
                                 .getRouteDistinguisher();
                         MplsLabel label = macIpAdvNlri.getMplsLable1();
@@ -298,6 +273,7 @@ public class BgpRouteProvider extends AbstractProvider
                         // Add route to route system
                         Source source = Source.REMOTE;
                         EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
+                                                            ipAddress,
                                                             ipNextHop,
                                                             rdToString(rd),
                                                             rtToString(rt),
@@ -308,12 +284,13 @@ public class BgpRouteProvider extends AbstractProvider
                 }
             }
 
-            if ((rt != null) && (evpnUnreachNlri != null)) {
+            if (!evpnUnreachNlri.isEmpty()) {
                 for (BgpEvpnNlri nlri : evpnUnreachNlri) {
                     if (nlri.getRouteType() == RouteType.MAC_IP_ADVERTISEMENT) {
                         BgpMacIpAdvNlriVer4 macIpAdvNlri = (BgpMacIpAdvNlriVer4) nlri
                                 .getRouteTypeSpec();
                         MacAddress macAddress = macIpAdvNlri.getMacAddress();
+                        Ip4Address ipAddress = Ip4Address.valueOf(macIpAdvNlri.getIpAddress());
                         RouteDistinguisher rd = macIpAdvNlri
                                 .getRouteDistinguisher();
                         MplsLabel label = macIpAdvNlri.getMplsLable1();
@@ -321,11 +298,12 @@ public class BgpRouteProvider extends AbstractProvider
                                  macIpAdvNlri.toString());
                         // Delete route from route system
                         Source source = Source.REMOTE;
-                        // For mpUnreachNlri, nexthop is null
+                        // For mpUnreachNlri, nexthop and rt is null
                         EvpnRoute evpnRoute = new EvpnRoute(source, macAddress,
-                                                            ipNextHop,
+                                                            ipAddress,
+                                                            null,
                                                             rdToString(rd),
-                                                            rtToString(rt),
+                                                            null,
                                                             labelToInt(label));
                         routeAdminService.withdrawEvpnRoute(Collections
                                 .singleton(evpnRoute));
@@ -336,15 +314,26 @@ public class BgpRouteProvider extends AbstractProvider
     }
 
     @Override
-    public void sendEvpnRoute(EvpnRoute evpnRoute) {
-        OperationType operationType = OperationType.ADD;
+    public void sendEvpnRoute(EvpnRoute.OperationType type, EvpnRoute evpnRoute) {
+        OperationType operationType = null;
+        switch (type) {
+        case UPDATE:
+            operationType = OperationType.UPDATE;
+            break;
+        case REMOVE:
+            operationType = OperationType.DELETE;
+            break;
+        default:
+            break;
+        }
         String rdString = evpnRoute.routeDistinguisher()
                 .getRouteDistinguisher();
-        MacAddress macAddress = evpnRoute.prefix();
+        MacAddress macAddress = evpnRoute.prefixMac();
+        InetAddress inetAddress = evpnRoute.prefixIp().toInetAddress();
         Ip4Address nextHop = evpnRoute.nextHop();
         String rtString = evpnRoute.routeTarget().getRouteTarget();
         int labelInt = evpnRoute.label().getLabel();
         sendUpdateMessage(operationType, rdString, rtString, nextHop,
-                          macAddress, labelInt);
+                          macAddress, inetAddress, labelInt);
     }
 }

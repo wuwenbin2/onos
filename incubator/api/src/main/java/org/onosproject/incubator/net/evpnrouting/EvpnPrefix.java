@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Objects;
 
+import org.onlab.packet.Ip4Address;
 import org.onlab.packet.MacAddress;
 
 /**
@@ -29,19 +30,24 @@ import org.onlab.packet.MacAddress;
 public final class EvpnPrefix {
 
     private final RouteDistinguisher rd;
-    private final MacAddress prefix;
+    private final MacAddress macAddress;
+    private final Ip4Address ipAddress;
 
     // new add
-    private EvpnPrefix(RouteDistinguisher rd, MacAddress prefix) {
+    private EvpnPrefix(RouteDistinguisher rd, MacAddress macAddress,
+                       Ip4Address ipAddress) {
         checkNotNull(rd);
-        checkNotNull(prefix);
+        checkNotNull(macAddress);
+        checkNotNull(ipAddress);
         this.rd = rd;
-        this.prefix = prefix;
+        this.macAddress = macAddress;
+        this.ipAddress = ipAddress;
     }
 
     public static EvpnPrefix evpnPrefix(RouteDistinguisher rd,
-                                        MacAddress prefix) {
-        return new EvpnPrefix(rd, prefix);
+                                        MacAddress macAddress,
+                                        Ip4Address ipAddress) {
+        return new EvpnPrefix(rd, macAddress, ipAddress);
     }
 
     public RouteDistinguisher routeDistinguisher() {
@@ -53,13 +59,17 @@ public final class EvpnPrefix {
      *
      * @return IP prefix
      */
-    public MacAddress prefix() {
-        return prefix;
+    public MacAddress macAddress() {
+        return macAddress;
+    }
+
+    public Ip4Address ipAddress() {
+        return ipAddress;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rd, prefix);
+        return Objects.hash(rd, macAddress, ipAddress);
     }
 
     @Override
@@ -74,13 +84,15 @@ public final class EvpnPrefix {
 
         EvpnPrefix that = (EvpnPrefix) other;
 
-        return Objects.equals(this.prefix(), that.prefix())
+        return Objects.equals(this.macAddress(), that.macAddress())
+                && Objects.equals(this.ipAddress, that.ipAddress)
                 && Objects.equals(this.rd, that.rd);
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("prefix", this.prefix())
-                .add("rd", this.rd).toString();
+        return toStringHelper(this).add("macAddress", this.macAddress())
+                .add("ipAddress", this.ipAddress()).add("rd", this.rd)
+                .toString();
     }
 }

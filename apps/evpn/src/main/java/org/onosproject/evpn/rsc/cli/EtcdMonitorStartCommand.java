@@ -16,73 +16,109 @@
 package org.onosproject.evpn.rsc.cli;
 
 import java.util.Collection;
-import org.apache.karaf.shell.commands.Argument;
+
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.onosproject.cli.AbstractShellCommand;
+import org.onosproject.evpn.rsc.EtcdMonitor;
+import org.onosproject.evpn.rsc.VpnInstance;
+import org.onosproject.evpn.rsc.VpnPort;
 import org.onosproject.evpn.rsc.baseport.BasePortService;
+import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
+import org.onosproject.evpn.rsc.vpnport.VpnPortService;
 import org.onosproject.vtnrsc.VirtualPort;
 
 /**
  * Supports for create a floating IP.
  */
-@Command(scope = "onos", name = "etcd-baseport-monitor", description = "Supports for start etcd monitor")
+@Command(scope = "onos", name = "etcd-monitor", description = "Supports for start etcd monitor")
 public class EtcdMonitorStartCommand extends AbstractShellCommand {
-    @Argument(index = 0, name = "ipAddress", description = "The ip address of etcd server",
+
+    @Option(name = "-i", aliases = "--ip", description = "Etcd server ip address",
             required = false, multiValued = false)
     String ipAddress = null;
 
-    @Option(name = "-t", aliases = "--start", description = "Start monitor of base port",
+    @Option(name = "-t", aliases = "--target", description = "Etcd monitor process : baseport; vpninstance; vpnport",
             required = false, multiValued = false)
-    boolean start = false;
+    String target = null;
 
-    @Option(name = "-o", aliases = "--stop", description = "Stop monitor of base port",
+    @Option(name = "-q", aliases = "--query", description = "query base port data : true; false",
             required = false, multiValued = false)
-    boolean stop = false;
+    String query = null;
 
-    @Option(name = "-q", aliases = "--query", description = "query base port data",
-            required = false, multiValued = false)
-    boolean query = false;
-
-    private static final String FMT = "virtualPortId=%s, networkId=%s, name=%s,"
+    private static final String BASEPORTFMT = "virtualPortId=%s, networkId=%s, name=%s,"
             + " tenantId=%s, deviceId=%s, adminStateUp=%s, state=%s,"
             + " macAddress=%s, deviceOwner=%s, fixedIp=%s, bindingHostId=%s,"
             + " bindingvnicType=%s, bindingvifType=%s, bindingvnicDetails=%s,"
             + " allowedAddress=%s, securityGroups=%s";
+    private static final String VPNINSTANCEFMT = "Id=%s, description=%s,"
+            + " name=%s, routeDistinguisher=%s, routeTarget=%s";
+    private static final String VPNPORTFMT = "Id=%s, vpnInstanceId=%s";
 
     @Override
     protected void execute() {
-        BasePortService service = get(BasePortService.class);
         try {
             if (ipAddress != null) {
                 String url = "http://" + ipAddress + ":2379";
-                service.updateEtcdUrl(url);
+                EtcdMonitor etcdMonitor = new EtcdMonitor(url);
+                etcdMonitor.etcdMonitor();
             }
-            if (start) {
-                service.etcdMonitor();
-            }
+            if (query != null) {
+                if (target.equals("baseport")) {
+                    BasePortService service = get(BasePortService.class);
+                    Collection<VirtualPort> ports = service.getPorts();
+                    printBasePorts(ports);
+                } else if (target.equals("vpninstance")) {
+                    VpnInstanceService service = get(VpnInstanceService.class);
+                    Collection<VpnInstance> vpnInstances = service
+                            .getInstances();
+                    printVpnInstances(vpnInstances);
+                } else if (target.equals("vpnport")) {
+                    VpnPortService service = get(VpnPortService.class);
+                    Collection<VpnPort> vpnPorts = service.getPorts();
+                    printVpnPorts(vpnPorts);
+                }
 
-            if (query) {
-                Collection<VirtualPort> ports = service.getPorts();
-                printPorts(ports);
             }
         } catch (Exception e) {
             print(null, e.getMessage());
         }
     }
 
-    private void printPorts(Collection<VirtualPort> ports) {
+    private void printBasePorts(Collection<VirtualPort> ports) {
         for (VirtualPort port : ports) {
-            printPort(port);
+            printBasePort(port);
         }
     }
 
-    private void printPort(VirtualPort port) {
-        print(FMT, port.portId(), port.networkId(), port.name(),
+    private void printVpnInstances(Collection<VpnInstance> vpnInstances) {
+        for (VpnInstance vpnInstance : vpnInstances) {
+            printVpnInstance(vpnInstance);
+        }
+    }
+
+    private void printVpnPorts(Collection<VpnPort> vpnPorts) {
+        for (VpnPort vpnport : vpnPorts) {
+            printVpnPort(vpnport);
+        }
+    }
+
+    private void printBasePort(VirtualPort port) {
+        print(BASEPORTFMT, port.portId(), port.networkId(), port.name(),
               port.tenantId(), port.deviceId(), port.adminStateUp(),
               port.state(), port.macAddress(), port.deviceOwner(),
               port.fixedIps(), port.bindingHostId(), port.bindingVnicType(),
               port.bindingVifType(), port.bindingVifDetails(),
               port.allowedAddressPairs(), port.securityGroups());
+    }
+
+    private void printVpnInstance(VpnInstance vpnInstance) {
+        print(VPNINSTANCEFMT, vpnInstance.id(), vpnInstance.description(),
+              vpnInstance.vpnInstanceName(), vpnInstance.routeDistinguishers(),
+              vpnInstance.routeTarget());
+    }
+
+    private void printVpnPort(VpnPort vpnPort) {
+        print(VPNPORTFMT, vpnPort.id(), vpnPort.vpnInstanceId());
     }
 }

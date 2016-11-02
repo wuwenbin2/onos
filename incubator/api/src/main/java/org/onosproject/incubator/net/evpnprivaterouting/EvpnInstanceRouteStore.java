@@ -19,6 +19,7 @@ package org.onosproject.incubator.net.evpnprivaterouting;
 import java.util.Collection;
 import java.util.Map;
 
+import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.store.Store;
 
@@ -72,4 +73,6 @@ public interface EvpnInstanceRouteStore
      * @return map of route
      */
     Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name);
+
+    RouteDistinguisher getRdByInstanceName(EvpnInstanceName name);
 }

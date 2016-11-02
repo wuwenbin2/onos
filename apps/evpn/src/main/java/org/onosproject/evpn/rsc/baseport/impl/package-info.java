@@ -14,24 +14,7 @@
  * limitations under the License.
  */
 
-package org.onosproject.evpn.rsc;
-
 /**
- * Representation of a VPNPort.
+ *  EVPN resource package.
  */
-public interface VpnPort {
-
-    /**
-     * Returns the VPN instance identifier.
-     *
-     * @return VPN instance identifier
-     */
-    VpnPortId id();
-
-    /**
-     * Returns the VPN instance identifier.
-     *
-     * @return VPN instance identifier
-     */
-    VpnInstanceId vpnInstanceId();
-}
+package org.onosproject.evpn.rsc.baseport.impl;

@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.onosproject.event.ListenerService;
+import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
 import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 
 /**
@@ -51,5 +52,13 @@ public interface EvpnInstanceRouteService
      * @return RouteTarget
      */
     RouteTarget getRtByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get Rd by Vpn instance name.
+     *
+     * @param name
+     * @return rd
+     */
+    RouteDistinguisher getRdByInstanceName(EvpnInstanceName name);
 
 }
