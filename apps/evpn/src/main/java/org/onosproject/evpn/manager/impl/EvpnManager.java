@@ -44,26 +44,26 @@ import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
 import org.onosproject.evpn.rsc.vpnport.VpnPortEvent;
 import org.onosproject.evpn.rsc.vpnport.VpnPortListener;
 import org.onosproject.evpn.rsc.vpnport.VpnPortService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstance;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteAdminService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteService;
-import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
-import org.onosproject.incubator.net.evpnrouting.EvpnRoute.Source;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteAdminService;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteEvent;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteListener;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteService;
-import org.onosproject.incubator.net.evpnrouting.Label;
-import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
-import org.onosproject.incubator.net.evpnrouting.RouteTarget;
 import org.onosproject.incubator.net.resource.label.LabelResource;
 import org.onosproject.incubator.net.resource.label.LabelResourceAdminService;
 import org.onosproject.incubator.net.resource.label.LabelResourceId;
 import org.onosproject.incubator.net.resource.label.LabelResourceService;
+import org.onosproject.incubator.net.routing.EvpnInstance;
+import org.onosproject.incubator.net.routing.EvpnInstanceName;
+import org.onosproject.incubator.net.routing.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.routing.EvpnInstancePrefix;
+import org.onosproject.incubator.net.routing.EvpnInstanceRoute;
+import org.onosproject.incubator.net.routing.EvpnRoute;
+import org.onosproject.incubator.net.routing.EvpnRoute.Source;
+import org.onosproject.incubator.net.routing.Label;
+import org.onosproject.incubator.net.routing.Route;
+import org.onosproject.incubator.net.routing.RouteAdminService;
+import org.onosproject.incubator.net.routing.RouteDistinguisher;
+import org.onosproject.incubator.net.routing.RouteEvent;
+import org.onosproject.incubator.net.routing.RouteListener;
+import org.onosproject.incubator.net.routing.RouteService;
+import org.onosproject.incubator.net.routing.RouteTableType;
+import org.onosproject.incubator.net.routing.RouteTarget;
 import org.onosproject.mastership.MastershipService;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
@@ -112,19 +112,13 @@ public class EvpnManager implements EvpnService {
     protected CoreService coreService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnRouteService routeService;
+    protected RouteService routeService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected DeviceService deviceService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnInstanceRouteService privateRouteService;
-
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnInstanceRouteAdminService privateRouteAdminService;
-
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnRouteAdminService routeAdminService;
+    protected RouteAdminService routeAdminService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
@@ -154,7 +148,7 @@ public class EvpnManager implements EvpnService {
     protected BasePortService basePortService;
 
     private final HostListener hostListener = new InnerHostListener();
-    private final EvpnRouteListener routeListener = new InnerRouteListener();
+    private final RouteListener routeListener = new InnerRouteListener();
     private final VpnPortListener vpnPortListner = new InnerVpnPortListener();
     private ApplicationId appId;
 
@@ -188,7 +182,7 @@ public class EvpnManager implements EvpnService {
             return;
         }
         vpnInstanceService.getInstances().forEach(vpnInstance -> {
-            RouteTarget rt = privateRouteService
+            RouteTarget rt = routeService
                     .getRtByInstanceName(vpnInstance.vpnInstanceName());
             if (route.routeTarget().equals(rt)) {
                 EvpnInstancePrefix evpnPrefix = EvpnInstancePrefix
@@ -199,12 +193,11 @@ public class EvpnManager implements EvpnService {
                                                                      .vpnInstanceName()),
                                     route.prefixMac(), route.prefixIp());
                 EvpnInstanceNextHop evpnNextHop = EvpnInstanceNextHop
-                        .evpnNextHop(route.nextHop(), route.label());
+                        .evpnNextHop(route.ipNextHop(), route.label());
                 EvpnInstanceRoute evpnPrivateRoute = new EvpnInstanceRoute(vpnInstance
                         .vpnInstanceName(), route.routeDistinguisher(), route
                                 .routeTarget(), evpnPrefix, evpnNextHop);
-                privateRouteAdminService
-                        .updateEvpnRoute(Sets.newHashSet(evpnPrivateRoute));
+                routeAdminService.update(Sets.newHashSet(evpnPrivateRoute));
 
             }
         });
@@ -291,7 +284,7 @@ public class EvpnManager implements EvpnService {
         }
         // deal with public route deleted and transfer to private route
         vpnInstanceService.getInstances().forEach(vpnInstance -> {
-            RouteDistinguisher rd = privateRouteService
+            RouteDistinguisher rd = routeService
                     .getRdByInstanceName(vpnInstance.vpnInstanceName());
             if (route.routeDistinguisher().equals(rd)) {
                 EvpnInstancePrefix evpnPrefix = EvpnInstancePrefix
@@ -302,12 +295,11 @@ public class EvpnManager implements EvpnService {
                                                                      .vpnInstanceName()),
                                     route.prefixMac(), route.prefixIp());
                 EvpnInstanceNextHop evpnNextHop = EvpnInstanceNextHop
-                        .evpnNextHop(route.nextHop(), route.label());
+                        .evpnNextHop(route.ipNextHop(), route.label());
                 EvpnInstanceRoute evpnPrivateRoute = new EvpnInstanceRoute(vpnInstance
                         .vpnInstanceName(), route.routeDistinguisher(), route
                                 .routeTarget(), evpnPrefix, evpnNextHop);
-                privateRouteAdminService
-                        .withdrawEvpnRoute(Sets.newHashSet(evpnPrivateRoute));
+                routeAdminService.withdraw(Sets.newHashSet(evpnPrivateRoute));
 
             }
         });
@@ -334,7 +326,7 @@ public class EvpnManager implements EvpnService {
         ExtensionTreatment treatment = resolver
                 .getExtensionInstruction(NICIRA_SET_TUNNEL_DST.type());
         try {
-            treatment.setPropertyValue("tunnelDst", route.nextHop());
+            treatment.setPropertyValue("tunnelDst", route.ipNextHop());
         } catch (Exception e) {
             log.error("Failed to get extension instruction to set tunnel dst {}",
                       deviceId);
@@ -410,15 +402,19 @@ public class EvpnManager implements EvpnService {
             flowObjectiveService.forward(deviceId, objective.remove());
         }
         // download remote flows
-        Collection<EvpnRoute> routes = routeService.getAllRoutes();
-        for (EvpnRoute route : routes) {
-            Set<Host> macs = hostService.getHostsByMac(route.prefixMac());
-            if (!macs.isEmpty() || !rt.equals(route.routeTarget())) {
+        Collection<Route> routes = routeService.getAllRoutes()
+                .get(RouteTableType.VPN_PUBLIC);
+        for (Route route : routes) {
+            EvpnRoute evpnRouteTem = (EvpnRoute) route;
+            Set<Host> macs = hostService
+                    .getHostsByMac(evpnRouteTem.prefixMac());
+            if (!macs.isEmpty() || !rt.equals(evpnRouteTem.routeTarget())) {
                 continue;
             }
-            addArpFlows(deviceId, route, type, host);
+            addArpFlows(deviceId, evpnRouteTem, type, host);
             ForwardingObjective.Builder build = getMplsOutBuilder(deviceId,
-                                                                  route, host);
+                                                                  evpnRouteTem,
+                                                                  host);
             if (type.equals(Objective.Operation.ADD)) {
                 flowObjectiveService.forward(deviceId, build.add());
             } else {
@@ -461,15 +457,13 @@ public class EvpnManager implements EvpnService {
                 .getIp4Address(), Ip4Address.valueOf(ipAddress.toString()), rd,
                                             rt, privatelabel);
         if (type.equals(Objective.Operation.ADD)) {
-            privateRouteAdminService
-                    .updateEvpnRoute(Sets.newHashSet(evpnPrivateRoute));
-            routeAdminService.updateEvpnRoute(Sets.newHashSet(evpnRoute));
+            routeAdminService.update(Sets.newHashSet(evpnPrivateRoute));
+            routeAdminService.update(Sets.newHashSet(evpnRoute));
             routeAdminService.sendEvpnMessage(EvpnRoute.OperationType.UPDATE,
                                               evpnRoute);
         } else {
-            privateRouteAdminService
-                    .withdrawEvpnRoute(Sets.newHashSet(evpnPrivateRoute));
-            routeAdminService.withdrawEvpnRoute(Sets.newHashSet(evpnRoute));
+            routeAdminService.withdraw(Sets.newHashSet(evpnPrivateRoute));
+            routeAdminService.withdraw(Sets.newHashSet(evpnRoute));
             routeAdminService.sendEvpnMessage(EvpnRoute.OperationType.REMOVE,
                                               evpnRoute);
         }
@@ -524,7 +518,7 @@ public class EvpnManager implements EvpnService {
                 .evpnPrefix(EvpnInstance.evpnMessage(rd, rt, instanceName),
                             host.mac(), host.ipAddresses().iterator().next()
                                     .getIp4Address());
-        Map<EvpnInstancePrefix, EvpnInstanceNextHop> routeMap = privateRouteService
+        Map<EvpnInstancePrefix, EvpnInstanceNextHop> routeMap = routeService
                 .getRouteMapByInstanceName(instanceName);
         EvpnInstanceNextHop evpnInstanceNextHop = routeMap.get(evpnPrefix);
         Label label = evpnInstanceNextHop.label();
@@ -571,14 +565,17 @@ public class EvpnManager implements EvpnService {
 
     }
 
-    private class InnerRouteListener implements EvpnRouteListener {
+    private class InnerRouteListener implements RouteListener {
 
         @Override
-        public void event(EvpnRouteEvent event) {
-            EvpnRoute route = event.subject();
-            if (EvpnRouteEvent.Type.ROUTE_ADDED == event.type()) {
+        public void event(RouteEvent event) {
+            if (!(event.subject() instanceof EvpnRoute)) {
+                return;
+            }
+            EvpnRoute route = (EvpnRoute) event.subject();
+            if (RouteEvent.Type.ROUTE_ADDED == event.type()) {
                 onBgpEvpnRouteUpdate(route);
-            } else if (EvpnRouteEvent.Type.ROUTE_REMOVED == event.type()) {
+            } else if (RouteEvent.Type.ROUTE_REMOVED == event.type()) {
                 onBgpEvpnRouteDelete(route);
             }
         }

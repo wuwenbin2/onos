@@ -15,7 +15,7 @@
  */
 package org.onosproject.evpn.manager;
 
-import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
+import org.onosproject.incubator.net.routing.EvpnRoute;
 import org.onosproject.net.Host;
 
 public interface EvpnService {

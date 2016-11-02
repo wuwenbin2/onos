@@ -4,8 +4,10 @@ import java.util.Collection;
 
 import org.apache.karaf.shell.commands.Command;
 import org.onosproject.cli.AbstractShellCommand;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteService;
+import org.onosproject.incubator.net.routing.EvpnInstanceRoute;
+import org.onosproject.incubator.net.routing.Route;
+import org.onosproject.incubator.net.routing.RouteService;
+import org.onosproject.incubator.net.routing.RouteTableType;
 
 @Command(scope = "onos", name = "evpn-private-routes", description = "Lists all routes in the route store")
 public class EvpnPrivateRouteList extends AbstractShellCommand {
@@ -13,11 +15,16 @@ public class EvpnPrivateRouteList extends AbstractShellCommand {
 
     @Override
     protected void execute() {
-        EvpnInstanceRouteService service = AbstractShellCommand
-                .get(EvpnInstanceRouteService.class);
-        Collection<EvpnInstanceRoute> routes = service.getAllRoutes();
-        routes.forEach(r -> print(FORMAT_ROUTE, r.evpnInstanceName(),
-                                  r.prefix(), r.nextHop()));
+
+        RouteService service = AbstractShellCommand.get(RouteService.class);
+
+        Collection<Route> evpnRoutes = service.getAllRoutes()
+                .get(RouteTableType.VPN_PRIVATE);
+        evpnRoutes.forEach(r -> {
+            EvpnInstanceRoute evpnInstanceRoute = (EvpnInstanceRoute) r;
+            print(FORMAT_ROUTE, evpnInstanceRoute.evpnInstanceName(),
+                  evpnInstanceRoute.prefix(), evpnInstanceRoute.nextHop());
+        });
 
     }
 

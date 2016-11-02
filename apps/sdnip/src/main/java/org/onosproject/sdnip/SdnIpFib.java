@@ -16,8 +16,11 @@
 
 package org.onosproject.sdnip;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -34,6 +37,7 @@ import org.onosproject.incubator.net.intf.Interface;
 import org.onosproject.incubator.net.intf.InterfaceEvent;
 import org.onosproject.incubator.net.intf.InterfaceListener;
 import org.onosproject.incubator.net.intf.InterfaceService;
+import org.onosproject.incubator.net.routing.IpNextHop;
 import org.onosproject.incubator.net.routing.ResolvedRoute;
 import org.onosproject.incubator.net.routing.RouteEvent;
 import org.onosproject.incubator.net.routing.RouteListener;
@@ -51,10 +55,8 @@ import org.onosproject.routing.IntentSynchronizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 
 /**
  * FIB component of SDN-IP.
@@ -106,9 +108,9 @@ public class SdnIpFib {
     private void update(ResolvedRoute route) {
         synchronized (this) {
             IpPrefix prefix = route.prefix();
+            IpNextHop nextHop = (IpNextHop) route.nextHop();
             MultiPointToSinglePointIntent intent =
-                    generateRouteIntent(prefix, route.nextHop(), route.nextHopMac());
-
+                    generateRouteIntent(prefix, nextHop.getIpAddress(), route.nextHopMac());
             if (intent == null) {
                 log.debug("SDN-IP no interface found for route {}", route);
                 return;
@@ -288,16 +290,18 @@ public class SdnIpFib {
     private class InternalRouteListener implements RouteListener {
         @Override
         public void event(RouteEvent event) {
-            switch (event.type()) {
-            case ROUTE_ADDED:
-            case ROUTE_UPDATED:
-                update(event.subject());
-                break;
-            case ROUTE_REMOVED:
-                withdraw(event.subject());
-                break;
-            default:
-                break;
+            if (event.subject() instanceof ResolvedRoute) {
+                switch (event.type()) {
+                case ROUTE_ADDED:
+                case ROUTE_UPDATED:
+                    update((ResolvedRoute) event.subject());
+                    break;
+                case ROUTE_REMOVED:
+                    withdraw((ResolvedRoute) event.subject());
+                    break;
+                default:
+                    break;
+                }
             }
         }
     }

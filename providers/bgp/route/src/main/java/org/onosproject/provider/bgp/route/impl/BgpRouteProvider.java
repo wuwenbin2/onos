@@ -46,9 +46,9 @@ import org.onosproject.bgpio.types.NlriDetailsType;
 import org.onosproject.bgpio.types.RouteDistinguisher;
 import org.onosproject.bgpio.types.RouteTarget;
 import org.onosproject.core.CoreService;
-import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
-import org.onosproject.incubator.net.evpnrouting.EvpnRoute.Source;
-import org.onosproject.incubator.net.evpnrouting.EvpnRouteAdminService;
+import org.onosproject.incubator.net.routing.EvpnRoute;
+import org.onosproject.incubator.net.routing.EvpnRoute.Source;
+import org.onosproject.incubator.net.routing.RouteAdminService;
 import org.onosproject.incubator.provider.BgpEvpnRouteProvider;
 import org.onosproject.incubator.provider.BgpEvpnRouteProviderRegistry;
 import org.onosproject.incubator.provider.BgpEvpnRouteProviderService;
@@ -89,7 +89,7 @@ public class BgpRouteProvider extends AbstractProvider
     protected MastershipService mastershipService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnRouteAdminService routeAdminService;
+    protected RouteAdminService routeAdminService;
 
     private final InternalBgpRouteListener bgpRouteListener = new InternalBgpRouteListener();
     private BgpEvpnRouteProviderService providerService;
@@ -278,7 +278,7 @@ public class BgpRouteProvider extends AbstractProvider
                                                             rdToString(rd),
                                                             rtToString(rt),
                                                             labelToInt(label));
-                        routeAdminService.updateEvpnRoute(Collections
+                        routeAdminService.update(Collections
                                 .singleton(evpnRoute));
                     }
                 }
@@ -305,7 +305,7 @@ public class BgpRouteProvider extends AbstractProvider
                                                             rdToString(rd),
                                                             null,
                                                             labelToInt(label));
-                        routeAdminService.withdrawEvpnRoute(Collections
+                        routeAdminService.withdraw(Collections
                                 .singleton(evpnRoute));
                     }
                 }
@@ -330,7 +330,7 @@ public class BgpRouteProvider extends AbstractProvider
                 .getRouteDistinguisher();
         MacAddress macAddress = evpnRoute.prefixMac();
         InetAddress inetAddress = evpnRoute.prefixIp().toInetAddress();
-        Ip4Address nextHop = evpnRoute.nextHop();
+        Ip4Address nextHop = evpnRoute.ipNextHop();
         String rtString = evpnRoute.routeTarget().getRouteTarget();
         int labelInt = evpnRoute.label().getLabel();
         sendUpdateMessage(operationType, rdString, rtString, nextHop,

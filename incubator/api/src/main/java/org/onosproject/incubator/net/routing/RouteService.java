@@ -18,7 +18,6 @@ package org.onosproject.incubator.net.routing;
 
 import org.onlab.packet.IpAddress;
 import org.onosproject.event.ListenerService;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -26,24 +25,15 @@ import java.util.Set;
 /**
  * Unicast IP route service.
  */
-public interface RouteService extends ListenerService<RouteEvent, RouteListener> {
+public interface RouteService
+        extends ListenerService<RouteEvent, RouteListener> {
 
     /**
      * Returns all routes for all route tables in the system.
      *
      * @return map of route table name to routes in that table
      */
-    Map<RouteTableId, Collection<Route>> getAllRoutes();
-
-    /**
-     * Performs a longest prefix match on the given IP address. The call will
-     * return the route with the most specific prefix that contains the given
-     * IP address.
-     *
-     * @param ip IP address
-     * @return longest prefix matched route
-     */
-    Route longestPrefixMatch(IpAddress ip);
+    Map<RouteTableType, Collection<Route>> getAllRoutes();
 
     /**
      * Returns the routes for the given next hop.
@@ -51,7 +41,7 @@ public interface RouteService extends ListenerService<RouteEvent, RouteListener>
      * @param nextHop next hop IP address
      * @return routes for this next hop
      */
-    Collection<Route> getRoutesForNextHop(IpAddress nextHop);
+    Collection<Route> getRoutesForNextHop(RouteTableType id, NextHop nextHop);
 
     /**
      * Returns all next hops in the route store.
@@ -59,5 +49,39 @@ public interface RouteService extends ListenerService<RouteEvent, RouteListener>
      * @return set of next hops
      */
     Set<NextHop> getNextHops();
+
+    /**
+     * Performs a longest prefix match on the given IP address. The call will
+     * return the route with the most specific prefix that contains the given IP
+     * address.
+     *
+     * @param ip IP address
+     * @return longest prefix matched route
+     */
+    IpRoute longestPrefixMatch(IpAddress ip);
+
+    /**
+     * Get Route Map by Vpn instance name.
+     *
+     * @param name
+     * @return map of route
+     */
+    Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get RouteTarget by Vpn instance name.
+     *
+     * @param name
+     * @return RouteTarget
+     */
+    RouteTarget getRtByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get Rd by Vpn instance name.
+     *
+     * @param name
+     * @return rd
+     */
+    RouteDistinguisher getRdByInstanceName(EvpnInstanceName name);
 
 }

@@ -15,11 +15,11 @@
  */
 package org.onosproject.routing;
 
-import com.google.common.base.MoreObjects;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.MoreObjects;
 
 /**
  * Represents a change in routing information.

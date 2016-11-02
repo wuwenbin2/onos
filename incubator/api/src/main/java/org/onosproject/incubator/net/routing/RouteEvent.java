@@ -16,14 +16,14 @@
 
 package org.onosproject.incubator.net.routing;
 
-import org.onosproject.event.AbstractEvent;
-
 import java.util.Objects;
+
+import org.onosproject.event.AbstractEvent;
 
 /**
  * Describes an event about a route.
  */
-public class RouteEvent extends AbstractEvent<RouteEvent.Type, ResolvedRoute> {
+public class RouteEvent extends AbstractEvent<RouteEvent.Type, Route> {
 
     /**
      * Route event type.
@@ -52,7 +52,7 @@ public class RouteEvent extends AbstractEvent<RouteEvent.Type, ResolvedRoute> {
      * @param type event type
      * @param subject event subject
      */
-    public RouteEvent(Type type, ResolvedRoute subject) {
+    public RouteEvent(Type type, Route subject) {
         super(type, subject);
     }
 
@@ -63,7 +63,7 @@ public class RouteEvent extends AbstractEvent<RouteEvent.Type, ResolvedRoute> {
      * @param subject event subject
      * @param time event time
      */
-    protected RouteEvent(Type type, ResolvedRoute subject, long time) {
+    protected RouteEvent(Type type, Route subject, long time) {
         super(type, subject, time);
     }
 
@@ -84,7 +84,7 @@ public class RouteEvent extends AbstractEvent<RouteEvent.Type, ResolvedRoute> {
 
         RouteEvent that = (RouteEvent) other;
 
-        return Objects.equals(this.subject(), that.subject()) &&
-                Objects.equals(this.type(), that.type());
+        return Objects.equals(this.subject(), that.subject())
+                && Objects.equals(this.type(), that.type());
     }
 }

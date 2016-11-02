@@ -16,18 +16,18 @@
 
 package org.onosproject.incubator.net.routing;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
+import java.util.Objects;
+
 import org.onlab.packet.IpAddress;
 import org.onlab.packet.IpPrefix;
 import org.onlab.packet.MacAddress;
 
-import java.util.Objects;
-
-import static com.google.common.base.MoreObjects.toStringHelper;
-
 /**
  * Represents a route with the next hop MAC address resolved.
  */
-public class ResolvedRoute {
+public class ResolvedRoute implements Route {
 
     private final IpPrefix prefix;
     private final IpAddress nextHop;
@@ -39,9 +39,9 @@ public class ResolvedRoute {
      * @param route input route
      * @param nextHopMac next hop MAC address
      */
-    public ResolvedRoute(Route route, MacAddress nextHopMac) {
+    public ResolvedRoute(IpRoute route, MacAddress nextHopMac) {
         this.prefix = route.prefix();
-        this.nextHop = route.nextHop();
+        this.nextHop = ((IpNextHop) route.nextHop()).getIpAddress();
         this.nextHopMac = nextHopMac;
     }
 
@@ -52,7 +52,8 @@ public class ResolvedRoute {
      * @param nextHop route next hop IP address
      * @param nextHopMac next hop MAC address
      */
-    public ResolvedRoute(IpPrefix prefix, IpAddress nextHop, MacAddress nextHopMac) {
+    public ResolvedRoute(IpPrefix prefix, IpAddress nextHop,
+                         MacAddress nextHopMac) {
         this.prefix = prefix;
         this.nextHop = nextHop;
         this.nextHopMac = nextHopMac;
@@ -72,8 +73,13 @@ public class ResolvedRoute {
      *
      * @return IP address
      */
-    public IpAddress nextHop() {
+    public IpAddress ipNextHop() {
         return nextHop;
+    }
+
+    @Override
+    public NextHop nextHop() {
+        return IpNextHop.ipAddress(nextHop);
     }
 
     /**
@@ -102,17 +108,15 @@ public class ResolvedRoute {
 
         ResolvedRoute that = (ResolvedRoute) other;
 
-        return Objects.equals(this.prefix, that.prefix) &&
-                Objects.equals(this.nextHop, that.nextHop) &&
-                Objects.equals(this.nextHopMac, that.nextHopMac);
+        return Objects.equals(this.prefix, that.prefix)
+                && Objects.equals(this.nextHop, that.nextHop)
+                && Objects.equals(this.nextHopMac, that.nextHopMac);
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this)
-                .add("prefix", prefix)
-                .add("nextHop", nextHop)
-                .add("nextHopMac", nextHopMac)
+        return toStringHelper(this).add("prefix", prefix)
+                .add("nextHop", nextHop).add("nextHopMac", nextHopMac)
                 .toString();
     }
 }

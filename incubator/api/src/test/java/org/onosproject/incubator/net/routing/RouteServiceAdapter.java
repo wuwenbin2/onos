@@ -16,11 +16,12 @@
 
 package org.onosproject.incubator.net.routing;
 
-import org.onlab.packet.IpAddress;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import org.onlab.packet.IpAddress;
+import org.onosproject.incubator.net.routing.EvpnRoute.OperationType;
 
 /**
  * Adapter class for the route service.
@@ -37,17 +38,12 @@ public class RouteServiceAdapter implements RouteAdminService {
     }
 
     @Override
-    public Map<RouteTableId, Collection<Route>> getAllRoutes() {
+    public Map<RouteTableType, Collection<Route>> getAllRoutes() {
         return null;
     }
 
     @Override
-    public Route longestPrefixMatch(IpAddress ip) {
-        return null;
-    }
-
-    @Override
-    public Collection<Route> getRoutesForNextHop(IpAddress nextHop) {
+    public IpRoute longestPrefixMatch(IpAddress ip) {
         return null;
     }
 
@@ -65,4 +61,30 @@ public class RouteServiceAdapter implements RouteAdminService {
     public void removeListener(RouteListener listener) {
 
     }
+
+    @Override
+    public Collection<Route> getRoutesForNextHop(RouteTableType id,
+                                                 NextHop nextHop) {
+        return null;
+    }
+
+    @Override
+    public Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name) {
+        return null;
+    }
+
+    @Override
+    public RouteTarget getRtByInstanceName(EvpnInstanceName name) {
+        return null;
+    }
+
+    @Override
+    public RouteDistinguisher getRdByInstanceName(EvpnInstanceName name) {
+        return null;
+    }
+
+    @Override
+    public void sendEvpnMessage(OperationType remove, EvpnRoute evpnRoute) {
+    }
+
 }

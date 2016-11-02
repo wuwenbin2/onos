@@ -40,15 +40,15 @@ import org.onosproject.evpn.rsc.DefaultVpnInstance;
 import org.onosproject.evpn.rsc.VpnInstance;
 import org.onosproject.evpn.rsc.VpnInstanceId;
 import org.onosproject.evpn.rsc.vpninstance.VpnInstanceService;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstance;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceNextHop;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstancePrefix;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRoute;
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceRouteAdminService;
-import org.onosproject.incubator.net.evpnrouting.Label;
-import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
-import org.onosproject.incubator.net.evpnrouting.RouteTarget;
+import org.onosproject.incubator.net.routing.EvpnInstance;
+import org.onosproject.incubator.net.routing.EvpnInstanceName;
+import org.onosproject.incubator.net.routing.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.routing.EvpnInstancePrefix;
+import org.onosproject.incubator.net.routing.EvpnInstanceRoute;
+import org.onosproject.incubator.net.routing.Label;
+import org.onosproject.incubator.net.routing.RouteAdminService;
+import org.onosproject.incubator.net.routing.RouteDistinguisher;
+import org.onosproject.incubator.net.routing.RouteTarget;
 import org.onosproject.store.serializers.KryoNamespaces;
 import org.onosproject.store.service.EventuallyConsistentMap;
 import org.onosproject.store.service.StorageService;
@@ -84,7 +84,7 @@ public class VpnInstanceManager implements VpnInstanceService {
     protected StorageService storageService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected EvpnInstanceRouteAdminService routeService;
+    protected RouteAdminService routeService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
@@ -234,7 +234,7 @@ public class VpnInstanceManager implements VpnInstanceService {
                                                                                   .valueOf("127.0.0.1"),
                                                                                        Label.label(0)));
         vpnInstanceMap.put(id, vpnInstance);
-        routeService.updateEvpnRoute(Sets.newHashSet(vpnInstanceRoute));
+        routeService.update(Sets.newHashSet(vpnInstanceRoute));
         return Collections.unmodifiableCollection(vpnInstanceMap.values());
     }
 }

@@ -16,33 +16,9 @@
 
 package org.onosproject.incubator.net.routing.impl;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.Service;
-import org.onlab.packet.IpAddress;
-import org.onlab.packet.MacAddress;
-import org.onosproject.event.ListenerService;
-import org.onosproject.incubator.net.routing.NextHop;
-import org.onosproject.incubator.net.routing.ResolvedRoute;
-import org.onosproject.incubator.net.routing.Route;
-import org.onosproject.incubator.net.routing.RouteAdminService;
-import org.onosproject.incubator.net.routing.RouteEvent;
-import org.onosproject.incubator.net.routing.RouteListener;
-import org.onosproject.incubator.net.routing.RouteService;
-import org.onosproject.incubator.net.routing.RouteStore;
-import org.onosproject.incubator.net.routing.RouteStoreDelegate;
-import org.onosproject.incubator.net.routing.RouteTableId;
-import org.onosproject.net.Host;
-import org.onosproject.net.host.HostEvent;
-import org.onosproject.net.host.HostListener;
-import org.onosproject.net.host.HostService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static org.onlab.util.Tools.groupedThreads;
 
-import javax.annotation.concurrent.GuardedBy;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,16 +32,59 @@ import java.util.concurrent.ThreadFactory;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.Executors.newSingleThreadExecutor;
-import static org.onlab.util.Tools.groupedThreads;
+import javax.annotation.concurrent.GuardedBy;
+
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.Service;
+import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
+import org.onosproject.event.ListenerService;
+import org.onosproject.incubator.net.routing.EvpnInstanceName;
+import org.onosproject.incubator.net.routing.EvpnInstanceNextHop;
+import org.onosproject.incubator.net.routing.EvpnInstancePrefix;
+import org.onosproject.incubator.net.routing.EvpnInstanceRoute;
+import org.onosproject.incubator.net.routing.EvpnRoute;
+import org.onosproject.incubator.net.routing.IpRoute;
+import org.onosproject.incubator.net.routing.NextHop;
+import org.onosproject.incubator.net.routing.ResolvedNextHop;
+import org.onosproject.incubator.net.routing.ResolvedRoute;
+import org.onosproject.incubator.net.routing.Route;
+import org.onosproject.incubator.net.routing.RouteAdminService;
+import org.onosproject.incubator.net.routing.RouteDistinguisher;
+import org.onosproject.incubator.net.routing.RouteEvent;
+import org.onosproject.incubator.net.routing.RouteListener;
+import org.onosproject.incubator.net.routing.RouteService;
+import org.onosproject.incubator.net.routing.RouteStore;
+import org.onosproject.incubator.net.routing.RouteStoreDelegate;
+import org.onosproject.incubator.net.routing.RouteTableType;
+import org.onosproject.incubator.net.routing.RouteTarget;
+import org.onosproject.incubator.net.routing.EvpnRoute.OperationType;
+import org.onosproject.incubator.provider.BgpEvpnRouteProvider;
+import org.onosproject.incubator.provider.BgpEvpnRouteProviderRegistry;
+import org.onosproject.incubator.provider.BgpEvpnRouteProviderService;
+import org.onosproject.net.Host;
+import org.onosproject.net.host.HostEvent;
+import org.onosproject.net.host.HostListener;
+import org.onosproject.net.host.HostService;
+import org.onosproject.net.provider.AbstractListenerProviderRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the unicast route service.
  */
 @Service
 @Component
-public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
-        RouteService, RouteAdminService {
+public class RouteManager
+        extends
+        AbstractListenerProviderRegistry<RouteEvent, RouteListener, BgpEvpnRouteProvider, BgpEvpnRouteProviderService>
+        implements BgpEvpnRouteProviderRegistry,
+        ListenerService<RouteEvent, RouteListener>, RouteService,
+        RouteAdminService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -118,16 +137,28 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
             routeStore.getRouteTables().forEach(table -> {
                 Collection<Route> routes = routeStore.getRoutes(table);
                 if (routes != null) {
-                    routes.forEach(route ->
-                        l.post(new RouteEvent(RouteEvent.Type.ROUTE_UPDATED,
-                                        new ResolvedRoute(route, routeStore.getNextHop(route.nextHop())))));
+                    routes.forEach(route -> {
+                        if (route instanceof IpRoute) {
+                            IpRoute ipRoute = (IpRoute) route;
+                            l.post(new RouteEvent(RouteEvent.Type.ROUTE_UPDATED,
+                                                  new ResolvedRoute(ipRoute,
+                                                                    routeStore
+                                                                            .getNextHop(ipRoute
+                                                                                    .ipNextHop()))));
+
+                        } else if (route instanceof EvpnRoute
+                                | route instanceof EvpnInstanceRoute) {
+                            l.post(new RouteEvent(RouteEvent.Type.ROUTE_UPDATED,
+                                                  route));
+                        }
+                    });
+
+                    listeners.put(listener, l);
+
+                    l.start();
+                    log.debug("Route synchronization complete");
                 }
             });
-
-            listeners.put(listener, l);
-
-            l.start();
-            log.debug("Route synchronization complete");
         }
     }
 
@@ -146,7 +177,7 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
      *
      * @param event event
      */
-    private void post(RouteEvent event) {
+    protected void post(RouteEvent event) {
         log.debug("Sending event {}", event);
         synchronized (this) {
             listeners.values().forEach(l -> l.post(event));
@@ -154,27 +185,40 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
     }
 
     @Override
-    public Map<RouteTableId, Collection<Route>> getAllRoutes() {
+    public Map<RouteTableType, Collection<Route>> getAllRoutes() {
         return routeStore.getRouteTables().stream()
-                .collect(Collectors.toMap(Function.identity(),
-                        table -> (table == null) ?
-                                 Collections.emptySet() : routeStore.getRoutes(table)));
+                .collect(Collectors
+                        .toMap(Function.identity(),
+                               table -> (table == null) ? Collections.emptySet()
+                                                        : routeStore
+                                                                .getRoutes(table)));
     }
 
     @Override
-    public Route longestPrefixMatch(IpAddress ip) {
+    public Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name) {
+        return routeStore.getRouteMapByInstanceName(name);
+    }
+
+    @Override
+    public RouteTarget getRtByInstanceName(EvpnInstanceName name) {
+        return routeStore.getRtByInstanceName(name);
+    }
+
+    public IpRoute longestPrefixMatch(IpAddress ip) {
         return routeStore.longestPrefixMatch(ip);
     }
 
     @Override
-    public Collection<Route> getRoutesForNextHop(IpAddress nextHop) {
-        return routeStore.getRoutesForNextHop(nextHop);
+    public Collection<Route> getRoutesForNextHop(RouteTableType id,
+                                                 NextHop nextHop) {
+        return routeStore.getRoutesForNextHop(id, nextHop);
     }
 
     @Override
     public Set<NextHop> getNextHops() {
         return routeStore.getNextHops().entrySet().stream()
-                .map(entry -> new NextHop(entry.getKey(), entry.getValue()))
+                .map(entry -> new ResolvedNextHop(entry.getKey(),
+                                                  entry.getValue()))
                 .collect(Collectors.toSet());
     }
 
@@ -184,7 +228,9 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
             routes.forEach(route -> {
                 log.debug("Received update {}", route);
                 routeStore.updateRoute(route);
-                resolve(route);
+                if (route instanceof IpRoute) {
+                    resolve((IpRoute) route);
+                }
             });
         }
     }
@@ -199,13 +245,13 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
         }
     }
 
-    private void resolve(Route route) {
+    private void resolve(IpRoute route) {
         // Monitor the IP address for updates of the MAC address
-        hostService.startMonitoringIp(route.nextHop());
+        hostService.startMonitoringIp(route.ipNextHop());
 
-        MacAddress nextHopMac = routeStore.getNextHop(route.nextHop());
+        MacAddress nextHopMac = routeStore.getNextHop(route.ipNextHop());
         if (nextHopMac == null) {
-            Set<Host> hosts = hostService.getHostsByIp(route.nextHop());
+            Set<Host> hosts = hostService.getHostsByIp(route.ipNextHop());
             Optional<Host> host = hosts.stream().findFirst();
             if (host.isPresent()) {
                 nextHopMac = host.get().mac();
@@ -213,7 +259,7 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
         }
 
         if (nextHopMac != null) {
-            routeStore.updateNextHop(route.nextHop(), nextHopMac);
+            routeStore.updateNextHop(route.ipNextHop(), nextHopMac);
         }
     }
 
@@ -283,7 +329,8 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
                 try {
                     listener.event(queue.take());
                 } catch (InterruptedException e) {
-                    log.info("Route listener event thread shutting down: {}", e.getMessage());
+                    log.info("Route listener event thread shutting down: {}",
+                             e.getMessage());
                     break;
                 } catch (Exception e) {
                     log.warn("Exception during route event handler", e);
@@ -323,6 +370,33 @@ public class RouteManager implements ListenerService<RouteEvent, RouteListener>,
                 break;
             }
         }
+    }
+
+    @Override
+    public void sendEvpnMessage(OperationType type, EvpnRoute evpnRoute) {
+        if (evpnRoute == null) {
+            return;
+        }
+        String scheme = "route";
+        BgpEvpnRouteProvider provider = (BgpEvpnRouteProvider) getProvider(scheme);
+        if (provider != null) {
+            provider.sendEvpnRoute(type, evpnRoute);
+            return;
+        } else {
+            log.error("Provider not found for {}", scheme);
+            return;
+        }
+    }
+
+    @Override
+    protected BgpEvpnRouteProviderService createProviderService(BgpEvpnRouteProvider provider) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public RouteDistinguisher getRdByInstanceName(EvpnInstanceName name) {
+        return routeStore.getRdByInstanceName(name);
     }
 
 }

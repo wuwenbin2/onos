@@ -304,7 +304,7 @@ public class SingleSwitchFibInstaller {
 
         Integer nextId;
         synchronized (this) {
-            nextId = nextHops.get(route.nextHop());
+            nextId = nextHops.get(route.ipNextHop());
         }
 
         flowObjectiveService.forward(deviceId,
@@ -352,19 +352,19 @@ public class SingleSwitchFibInstaller {
     }
 
     private synchronized void addNextHop(ResolvedRoute route) {
-        prefixToNextHop.put(route.prefix(), route.nextHop());
-        if (nextHopsCount.count(route.nextHop()) == 0) {
+        prefixToNextHop.put(route.prefix(), route.ipNextHop());
+        if (nextHopsCount.count(route.ipNextHop()) == 0) {
             // There was no next hop in the multiset
 
-            Interface egressIntf = interfaceService.getMatchingInterface(route.nextHop());
+            Interface egressIntf = interfaceService.getMatchingInterface(route.ipNextHop());
             if (egressIntf == null) {
                 log.warn("no egress interface found for {}", route);
                 return;
             }
 
-            NextHopGroupKey groupKey = new NextHopGroupKey(route.nextHop());
+            NextHopGroupKey groupKey = new NextHopGroupKey(route.ipNextHop());
 
-            NextHop nextHop = new NextHop(route.nextHop(), route.nextHopMac(), groupKey);
+            NextHop nextHop = new NextHop(route.ipNextHop(), route.nextHopMac(), groupKey);
 
             TrafficTreatment.Builder treatment = DefaultTrafficTreatment.builder()
                     .setEthSrc(egressIntf.mac())
@@ -401,12 +401,12 @@ public class SingleSwitchFibInstaller {
             if (routeToNextHop) {
                 // Install route to next hop
                 ForwardingObjective fob =
-                        generateRibForwardingObj(IpPrefix.valueOf(route.nextHop(), 32), nextId).add();
+                        generateRibForwardingObj(IpPrefix.valueOf(route.ipNextHop(), 32), nextId).add();
                 flowObjectiveService.forward(deviceId, fob);
             }
         }
 
-        nextHopsCount.add(route.nextHop());
+        nextHopsCount.add(route.ipNextHop());
     }
 
     /*private synchronized Group deleteNextHop(IpPrefix prefix) {
@@ -541,17 +541,19 @@ public class SingleSwitchFibInstaller {
     private class InternalRouteListener implements RouteListener {
         @Override
         public void event(RouteEvent event) {
-            ResolvedRoute route = event.subject();
-            switch (event.type()) {
-            case ROUTE_ADDED:
-            case ROUTE_UPDATED:
-                updateRoute(route);
-                break;
-            case ROUTE_REMOVED:
-                deleteRoute(route);
-                break;
-            default:
-                break;
+            if (event.subject() instanceof ResolvedRoute) {
+                ResolvedRoute route = (ResolvedRoute) event.subject();
+                switch (event.type()) {
+                case ROUTE_ADDED:
+                case ROUTE_UPDATED:
+                    updateRoute(route);
+                    break;
+                case ROUTE_REMOVED:
+                    deleteRoute(route);
+                    break;
+                default:
+                    break;
+                }
             }
         }
     }

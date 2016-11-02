@@ -21,9 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Objects;
 
-import org.onosproject.incubator.net.evpnprivaterouting.EvpnInstanceName;
-import org.onosproject.incubator.net.evpnrouting.RouteDistinguisher;
-import org.onosproject.incubator.net.evpnrouting.RouteTarget;
+import org.onosproject.incubator.net.routing.EvpnInstanceName;
+import org.onosproject.incubator.net.routing.RouteDistinguisher;
+import org.onosproject.incubator.net.routing.RouteTarget;
 
 /**
  * Default implementation of vpn instance.

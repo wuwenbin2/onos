@@ -16,14 +16,16 @@
 
 package org.onosproject.cli.net;
 
+import java.util.Collection;
+import java.util.Set;
+
 import org.apache.karaf.shell.commands.Command;
 import org.onosproject.cli.AbstractShellCommand;
 import org.onosproject.incubator.net.routing.NextHop;
+import org.onosproject.incubator.net.routing.ResolvedNextHop;
 import org.onosproject.incubator.net.routing.Route;
 import org.onosproject.incubator.net.routing.RouteService;
-
-import java.util.Collection;
-import java.util.Set;
+import org.onosproject.incubator.net.routing.RouteTableType;
 
 /**
  * Command to show information about routing next hops.
@@ -49,8 +51,15 @@ public class NextHopsListCommand extends AbstractShellCommand {
         Set<NextHop> nextHops = service.getNextHops();
 
         nextHops.forEach(nextHop -> {
-            Collection<Route> routes = service.getRoutesForNextHop(nextHop.ip());
-            print(FORMAT, nextHop.ip(), nextHop.mac(), routes.size());
+            if (nextHop instanceof ResolvedNextHop) {
+                ResolvedNextHop resolvedNextHop = (ResolvedNextHop) nextHop;
+                Collection<Route> routes = service
+                        .getRoutesForNextHop(RouteTableType.IPV4, nextHop);
+                routes.addAll(service
+                        .getRoutesForNextHop(RouteTableType.IPV6, nextHop));
+                print(FORMAT, resolvedNextHop.ip(), resolvedNextHop.mac(),
+                      routes.size());
+            }
         });
 
     }

@@ -16,13 +16,13 @@
 
 package org.onosproject.incubator.net.routing;
 
-import org.onlab.packet.IpAddress;
-import org.onlab.packet.MacAddress;
-import org.onosproject.store.Store;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
+import org.onosproject.store.Store;
 
 /**
  * Unicast route store.
@@ -48,7 +48,7 @@ public interface RouteStore extends Store<RouteEvent, RouteStoreDelegate> {
      *
      * @return route table IDs
      */
-    Set<RouteTableId> getRouteTables();
+    Set<RouteTableType> getRouteTables();
 
     /**
      * Returns the routes for a particular route table.
@@ -56,15 +56,7 @@ public interface RouteStore extends Store<RouteEvent, RouteStoreDelegate> {
      * @param table route table
      * @return collection of route in the table
      */
-    Collection<Route> getRoutes(RouteTableId table);
-
-    /**
-     * Performs a longest prefix match with the given IP address.
-     *
-     * @param ip IP to look up
-     * @return longest prefix match route
-     */
-    Route longestPrefixMatch(IpAddress ip);
+    Collection<Route> getRoutes(RouteTableType table);
 
     /**
      * Returns the routes that point to the given next hop IP address.
@@ -72,7 +64,8 @@ public interface RouteStore extends Store<RouteEvent, RouteStoreDelegate> {
      * @param ip IP address of the next hop
      * @return routes for the given next hop
      */
-    Collection<Route> getRoutesForNextHop(IpAddress ip);
+    Collection<Route> getRoutesForNextHop(RouteTableType table,
+                                          NextHop nextHop);
 
     /**
      * Updates a next hop IP and MAC in the store.
@@ -99,9 +92,50 @@ public interface RouteStore extends Store<RouteEvent, RouteStoreDelegate> {
     MacAddress getNextHop(IpAddress ip);
 
     /**
+     * Performs a longest prefix match with the given IP address.
+     *
+     * @param ip IP to look up
+     * @return longest prefix match route
+     */
+    IpRoute longestPrefixMatch(IpAddress ip);
+
+    /**
      * Returns all next hops in the route store.
      *
      * @return next hops
      */
     Map<IpAddress, MacAddress> getNextHops();
+
+    /**
+     * Get routes by the given instance name.
+     *
+     * @param evpnName the given evpn name
+     * @return collection of EvpnInstanceRoute
+     */
+    Collection<EvpnInstanceRoute> getEvpnRoutes(EvpnInstanceName evpnName);
+
+    /**
+     * Get RouteTarget by Vpn instance name.
+     *
+     * @param name
+     * @return RouteTarget
+     */
+    RouteTarget getRtByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get Route Map by Vpn instance name.
+     *
+     * @param name
+     * @return map of route
+     */
+    Map<EvpnInstancePrefix, EvpnInstanceNextHop> getRouteMapByInstanceName(EvpnInstanceName name);
+
+    /**
+     * Get RouteDistinguisher by Vpn instance name.
+     *
+     * @param name
+     * @return RouteDistinguisher
+     */
+    RouteDistinguisher getRdByInstanceName(EvpnInstanceName name);
+
 }

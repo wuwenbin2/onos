@@ -15,8 +15,17 @@
  */
 package org.onosproject.routing.fpm;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+import static org.onlab.util.Tools.groupedThreads;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Dictionary;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -39,6 +48,8 @@ import org.onlab.packet.IpAddress;
 import org.onlab.packet.IpPrefix;
 import org.onlab.util.Tools;
 import org.onosproject.cfg.ComponentConfigService;
+import org.onosproject.incubator.net.routing.IpNextHop;
+import org.onosproject.incubator.net.routing.IpRoute;
 import org.onosproject.incubator.net.routing.Route;
 import org.onosproject.incubator.net.routing.RouteAdminService;
 import org.onosproject.routing.fpm.protocol.FpmHeader;
@@ -52,16 +63,8 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Dictionary;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.concurrent.Executors.newCachedThreadPool;
-import static org.onlab.util.Tools.groupedThreads;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Forwarding Plane Manager (FPM) route source.
@@ -85,7 +88,7 @@ public class FpmManager implements FpmInfoService {
 
     private Map<SocketAddress, Long> peers = new ConcurrentHashMap<>();
 
-    private Map<IpPrefix, Route> fpmRoutes = new ConcurrentHashMap<>();
+    private Map<IpPrefix, IpRoute> fpmRoutes = new ConcurrentHashMap<>();
 
     @Property(name = "clearRoutes", boolValue = true,
             label = "Whether to clear routes when the FPM connection goes down")
@@ -203,28 +206,28 @@ public class FpmManager implements FpmInfoService {
         List<Route> updates = new LinkedList<>();
         List<Route> withdraws = new LinkedList<>();
 
-        Route route;
+        IpRoute route;
         switch (netlink.type()) {
         case RTM_NEWROUTE:
             if (gateway == null) {
                 // We ignore interface routes with no gateway for now.
                 return;
             }
-            route = new Route(Route.Source.FPM, prefix, gateway);
+            route = new IpRoute(IpRoute.Source.FPM, prefix, gateway);
 
             fpmRoutes.put(prefix, route);
 
             updates.add(route);
             break;
         case RTM_DELROUTE:
-            Route existing = fpmRoutes.remove(prefix);
+            IpRoute existing = fpmRoutes.remove(prefix);
             if (existing == null) {
                 log.warn("Got delete for non-existent prefix");
                 return;
             }
 
-            route = new Route(Route.Source.FPM, prefix, existing.nextHop());
-
+            IpNextHop nextHop = (IpNextHop) existing.nextHop();
+            route = new IpRoute(IpRoute.Source.FPM, prefix, nextHop.getIpAddress());
             withdraws.add(route);
             break;
         case RTM_GETROUTE:

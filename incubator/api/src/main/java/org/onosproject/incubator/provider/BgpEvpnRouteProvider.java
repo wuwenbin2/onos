@@ -16,7 +16,7 @@
 
 package org.onosproject.incubator.provider;
 
-import org.onosproject.incubator.net.evpnrouting.EvpnRoute;
+import org.onosproject.incubator.net.routing.EvpnRoute;
 import org.onosproject.net.provider.Provider;
 
 public interface BgpEvpnRouteProvider extends Provider {

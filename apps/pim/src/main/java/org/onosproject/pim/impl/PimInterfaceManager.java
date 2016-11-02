@@ -28,7 +28,7 @@ import org.onosproject.incubator.net.intf.Interface;
 import org.onosproject.incubator.net.intf.InterfaceEvent;
 import org.onosproject.incubator.net.intf.InterfaceListener;
 import org.onosproject.incubator.net.intf.InterfaceService;
-import org.onosproject.incubator.net.routing.Route;
+import org.onosproject.incubator.net.routing.IpRoute;
 import org.onosproject.incubator.net.routing.RouteService;
 import org.onosproject.net.ConnectPoint;
 import org.onosproject.net.Host;
@@ -251,14 +251,14 @@ public class PimInterfaceManager implements PimInterfaceService {
     }
 
     private PimInterface getSourceInterface(McastRoute route) {
-        Route unicastRoute = unicastRouteService.longestPrefixMatch(route.source());
+        IpRoute unicastRoute = unicastRouteService.longestPrefixMatch(route.source());
 
         if (unicastRoute == null) {
             log.warn("No route to source {}", route.source());
             return null;
         }
 
-        Interface intf = interfaceService.getMatchingInterface(unicastRoute.nextHop());
+        Interface intf = interfaceService.getMatchingInterface(unicastRoute.ipNextHop());
 
         if (intf == null) {
             log.warn("No interface with route to next hop {}", unicastRoute.nextHop());
@@ -272,7 +272,7 @@ public class PimInterfaceManager implements PimInterfaceService {
             return null;
         }
 
-        Set<Host> hosts = hostService.getHostsByIp(unicastRoute.nextHop());
+        Set<Host> hosts = hostService.getHostsByIp(unicastRoute.ipNextHop());
         Host host = null;
         for (Host h : hosts) {
             if (h.vlan().equals(intf.vlan())) {
@@ -284,7 +284,7 @@ public class PimInterfaceManager implements PimInterfaceService {
             return null;
         }
 
-        pimInterface.addRoute(route, unicastRoute.nextHop(), host.mac());
+        pimInterface.addRoute(route, unicastRoute.ipNextHop(), host.mac());
 
         return pimInterface;
     }

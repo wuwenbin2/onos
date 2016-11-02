@@ -18,6 +18,8 @@ package org.onosproject.incubator.net.routing;
 
 import java.util.Collection;
 
+import org.onosproject.incubator.net.routing.EvpnRoute.OperationType;
+
 /**
  * Service allowing mutation of unicast routing state.
  */
@@ -36,4 +38,6 @@ public interface RouteAdminService extends RouteService {
      * @param routes collection of routes to withdraw
      */
     void withdraw(Collection<Route> routes);
+
+    void sendEvpnMessage(OperationType type, EvpnRoute evpnRoute);
 }

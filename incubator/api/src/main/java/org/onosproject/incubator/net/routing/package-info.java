@@ -15,6 +15,6 @@
  */
 
 /**
- * Unicast routing service.
+ * Service allowing mutation of unicast routing state.
  */
 package org.onosproject.incubator.net.routing;

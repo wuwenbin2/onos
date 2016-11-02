@@ -21,12 +21,12 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.onlab.packet.IpAddress;
+import org.onosproject.incubator.net.routing.IpRoute;
 import org.onosproject.incubator.net.routing.ResolvedRoute;
-import org.onosproject.incubator.net.routing.Route;
 import org.onosproject.incubator.net.routing.RouteEvent;
 import org.onosproject.incubator.net.routing.RouteListener;
 import org.onosproject.incubator.net.routing.RouteService;
-import org.onosproject.incubator.net.routing.RouteTableId;
+import org.onosproject.incubator.net.routing.RouteTableType;
 import org.onosproject.routing.FibEntry;
 import org.onosproject.routing.FibListener;
 import org.onosproject.routing.FibUpdate;
@@ -62,23 +62,25 @@ public class Router implements RoutingService {
 
     @Override
     public Collection<RouteEntry> getRoutes4() {
-        return routeService.getAllRoutes().get(new RouteTableId("ipv4")).stream()
-                .map(route -> new RouteEntry(route.prefix(), route.nextHop()))
+        return routeService.getAllRoutes().get(RouteTableType.IPV4).stream()
+                .map(route -> new RouteEntry(((IpRoute) route).prefix(),
+                                             ((IpRoute) route).ipNextHop()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public Collection<RouteEntry> getRoutes6() {
-        return routeService.getAllRoutes().get(new RouteTableId("ipv6")).stream()
-                .map(route -> new RouteEntry(route.prefix(), route.nextHop()))
+        return routeService.getAllRoutes().get(RouteTableType.IPV6).stream()
+                .map(route -> new RouteEntry(((IpRoute) route).prefix(),
+                                             ((IpRoute) route).ipNextHop()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public RouteEntry getLongestMatchableRouteEntry(IpAddress ipAddress) {
-        Route route = routeService.longestPrefixMatch(ipAddress);
+        IpRoute route = routeService.longestPrefixMatch(ipAddress);
         if (route != null) {
-            return new RouteEntry(route.prefix(), route.nextHop());
+            return new RouteEntry(route.prefix(), route.ipNextHop());
         }
         return null;
     }
@@ -101,21 +103,30 @@ public class Router implements RoutingService {
 
         @Override
         public void event(RouteEvent event) {
-            ResolvedRoute route = event.subject();
-            FibEntry entry = new FibEntry(route.prefix(), route.nextHop(), route.nextHopMac());
+            if (event.subject() instanceof ResolvedRoute) {
+                ResolvedRoute route = (ResolvedRoute) event.subject();
+                FibEntry entry = new FibEntry(route.prefix(), route.ipNextHop(),
+                                              route.nextHopMac());
 
-            switch (event.type()) {
-            case ROUTE_ADDED:
-            case ROUTE_UPDATED:
-                fibListener.update(Collections.singleton(new FibUpdate(FibUpdate.Type.UPDATE, entry)),
-                        Collections.emptyList());
-                break;
-            case ROUTE_REMOVED:
-                fibListener.update(Collections.emptyList(),
-                        Collections.singleton(new FibUpdate(FibUpdate.Type.DELETE, entry)));
-                break;
-            default:
-                break;
+                switch (event.type()) {
+                case ROUTE_ADDED:
+                case ROUTE_UPDATED:
+                    fibListener.update(
+                                       Collections
+                                               .singleton(new FibUpdate(FibUpdate.Type.UPDATE,
+                                                                        entry)),
+                                       Collections.emptyList());
+                    break;
+                case ROUTE_REMOVED:
+                    fibListener
+                            .update(Collections.emptyList(),
+                                    Collections
+                                            .singleton(new FibUpdate(FibUpdate.Type.DELETE,
+                                                                     entry)));
+                    break;
+                default:
+                    break;
+                }
             }
         }
     }

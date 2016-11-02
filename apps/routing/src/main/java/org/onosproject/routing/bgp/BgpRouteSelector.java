@@ -16,6 +16,7 @@
 package org.onosproject.routing.bgp;
 
 import org.onlab.packet.IpPrefix;
+import org.onosproject.incubator.net.routing.IpRoute;
 import org.onosproject.incubator.net.routing.Route;
 import org.onosproject.routing.RouteUpdate;
 import org.slf4j.Logger;
@@ -81,7 +82,7 @@ class BgpRouteSelector {
                                            Collection<Route> updates,
                                            Collection<Route> withdraws) {
         if (routeUpdate != null) {
-            Route route = new Route(Route.Source.BGP, routeUpdate.routeEntry().prefix(),
+            IpRoute route = new IpRoute(IpRoute.Source.BGP, routeUpdate.routeEntry().prefix(),
                     routeUpdate.routeEntry().nextHop());
             if (routeUpdate.type().equals(RouteUpdate.Type.UPDATE)) {
                 updates.add(route);
