@@ -31,5 +31,17 @@
     <command>
       <action class="org.onosproject.evpn.rsc.cli.VpnPortListCommand"/>
     </command>
+    <command>
+      <action class="org.onosproject.evpn.bgp.cli.AddPeerCommand"/>
+    </command>
+    <command>
+      <action class="org.onosproject.evpn.bgp.cli.BgpPeersListCommand"/>
+    </command>
+    <command>
+      <action class="org.onosproject.evpn.bgp.cli.RemovePeerCommand"/>
+    </command>
+    <command>
+      <action class="org.onosproject.evpn.bgp.cli.BgpLocalConfigCommand"/>
+    </command>
   </command-bundle>
 </blueprint>
